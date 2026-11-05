@@ -17,6 +17,16 @@
   const bar = document.querySelector('.p-actions')
   if (bar) bar.append(back)
 
+  // Значок сайта во вкладке. Плеер копирует себя для «Сохранить» до этого скрипта,
+  // поэтому в сохранённый ролик значок не попадает
+  for (const [href, type] of [['favicon.ico', ''], ['favicon.svg', 'image/svg+xml']]) {
+    const ic = document.createElement('link')
+    ic.rel = 'icon'
+    ic.href = new URL(href, me.src).href
+    if (type) ic.type = type
+    document.head.append(ic)
+  }
+
   // Тот же адрес и то же хранилище, что у помощника sw.js
   const canon = p => { try { p = decodeURIComponent(p) } catch (e) { /* как есть */ } return p.split('/').map(encodeURIComponent).join('/') }
   const KEY = location.origin + canon(location.pathname)
