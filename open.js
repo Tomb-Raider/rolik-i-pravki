@@ -31,8 +31,11 @@ const canon = p => { try { p = decodeURIComponent(p) } catch {} return encPath(p
 const hash = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36) }
 const order = (a, b) => (a.split('/').length - b.split('/').length) || ((b === 'index.html') - (a === 'index.html')) || a.localeCompare(b)
 
-// Режим правок перед последним </body>, а если его нет, перед </html> или в конец
+// Режим правок перед последним </body>, а если его нет, перед </html> или в конец.
+// Запрет скриптов в самой странице (meta Content-Security-Policy, его кладут некоторые ИИ) снимаем
+// только в копии для правок: иначе браузер не даст режиму запуститься. Файл человека не меняется
 function inject(html, snippet) {
+  html = html.replace(/<meta\b[^>]*http-equiv\s*=\s*["']?content-security-policy["']?[^>]*>/gi, '')
   for (const re of [/<\/body\s*>/gi, /<\/html\s*>/gi]) {
     let last = null, m
     while ((m = re.exec(html))) last = m
