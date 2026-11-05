@@ -90,39 +90,15 @@ function showPanel(id) {
 showPanel(location.hash.slice(1))
 addEventListener('hashchange', () => showPanel(location.hash.slice(1)))
 
-/* ---------- Ролик: поля шаблона промта в одно сообщение для чата ----------
-   Порядок и подписи как в «Шаблоне промта» пакета. Пустые поля не попадают в сообщение */
-async function briefText(form) {
-  const v = k => (form.querySelector(`[data-k="${k}"]`)?.value || '').trim()
-  const line = k => v(k) ? `${k}: ${v(k)}` : ''
-  const block = rows => rows.filter(Boolean).join('\n')
-  const scenes = v('Сцены').split('\n').map(s => s.trim()).filter(Boolean).map((s, i) => `${i + 1}. ${s}`).join('\n')
-  const brand = block(['Шрифт', 'Фон', 'Текст', 'Акцент', 'Дополнительные цвета'].map(line))
-  const brief = [
-    'Собери ролик по инструкции «Ролик из HTML».',
-    block(['Тема', 'Для кого и где покажем', 'Длительность', 'Формат', 'Музыка'].map(line)),
-    scenes && 'Сцены по порядку. Одна строка это одна сцена, в скобках длительность, если важна:\n' + scenes,
-    block(['Референс', 'Что взять из референса'].map(line)),
-    brand && 'Бренд\n' + brand,
-    block(['Движение', 'Приёмы', 'Своё про движение', 'Чего не делать'].map(line)),
-    'Если ты агент в папке, собери ролик в файл Ролик.html. Если ты в чате, ответь одним блоком кода: сначала reel, потом все сцены по порядку. В note у каждой сцены одной фразой, что в ней происходит',
-  ].filter(Boolean).join('\n\n')
-  // Инструкцию берём из пакета ролика, на настоящем сайте она лежит рядом
-  const guide = await fetch('Инструкция для ИИ (ролик).md').then(r => r.ok ? r.text() : '').catch(() => '')
-  return guide ? guide.trim() + '\n\n────────\n\n' + brief : brief
-}
+/* Шаблон ролика, «Скопировать для чата» и «Открыть в плеере» на странице «Видео» живут в reel.js */
 
-document.addEventListener('click', async e => {
+document.addEventListener('click', e => {
   const tab = e.target.closest('.tabs a')
   if (tab) { e.preventDefault(); history.replaceState(null, '', tab.hash); showPanel(tab.hash.slice(1)); return }
-  const el = e.target.closest('[data-toast], [data-copy], [data-brief]')
+  const el = e.target.closest('[data-toast], [data-copy]')
   if (!el) return
   e.preventDefault()
   const copy = (text, ok) => navigator.clipboard?.writeText(text).then(() => toast(ok), () => toast('Браузер не дал скопировать'))
   if (el.dataset.copy !== undefined) return copy(el.closest('.agent').querySelector('pre').textContent, 'Фраза скопирована')
-  if (el.dataset.brief !== undefined) {
-    const text = await briefText(document.querySelector('form.brief'))
-    return copy(text, text.includes('────') ? 'Скопировано: инструкция и ваш ролик. Вставьте в свой чат' : 'Скопирован ваш ролик, инструкция не нашлась')
-  }
   toast(el.dataset.toast)
 })

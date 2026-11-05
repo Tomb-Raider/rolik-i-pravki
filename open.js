@@ -33,7 +33,8 @@ const order = (a, b) => (a.split('/').length - b.split('/').length) || ((b === '
 
 // Режим правок перед последним </body>, а если его нет, перед </html> или в конец.
 // Запрет скриптов в самой странице (meta Content-Security-Policy, его кладут некоторые ИИ) снимаем
-// только в копии для правок: иначе браузер не даст режиму запуститься. Файл человека не меняется
+// только в копии для правок: иначе браузер не даст режиму запуститься. Файл человека не меняется,
+// и «Скачать с правками» берёт его исходник вместе с этим запретом
 function inject(html, snippet) {
   html = html.replace(/<meta\b[^>]*http-equiv\s*=\s*["']?content-security-policy["']?[^>]*>/gi, '')
   for (const re of [/<\/body\s*>/gi, /<\/html\s*>/gi]) {
@@ -82,6 +83,8 @@ async function openFiles(root, entries) {
   if (cfgFile) try { site = JSON.parse(await cfgFile.file.text()) } catch {}
   const cfg = Object.assign({}, site, {
     root, name: site.name || root, base: decodeURIComponent(basePath), baseURL: basePath, opened: true,
+    // Здесь рядом с каждой страницей её исходник без режима: из него «Скачать с правками» собирает файл
+    srcCache: 'pravki-files',
     // У двух папок с одним именем правки не смешаются: ключ хранилища ещё и по составу страниц
     key: root + '#' + hash(pages.join('|')),
     pagesList: pages.map(p => ({ path: p, name: ((site.pages || {})[p] || {}).name || '' })),
@@ -100,6 +103,8 @@ async function openFiles(root, entries) {
         const html = await e.file.text()
         missing(html, e.path, have).forEach(p => lost.add(p))
         body = inject(html, snippet)
+        await cache.put(location.origin + canon(basePath + encPath(e.path)) + '?pravki-src',
+          new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8' } }))
       }
       await cache.put(location.origin + canon(basePath + encPath(e.path)),
         new Response(body, { headers: { 'content-type': TYPES[ext] || e.file.type || 'application/octet-stream' } }))

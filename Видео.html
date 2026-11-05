@@ -6,7 +6,7 @@
 <title>Видео · Ролик и правки в HTML</title>
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="site.css?v=202611060049">
 </head>
 <body>
 <div class="site">
@@ -20,74 +20,61 @@
 
   <nav class="tabs"><a class="on" href="#online">Онлайн</a><a href="#agent">Агент в&nbsp;папке</a></nav>
 
-  <!-- Онлайн: слева три шага с полями шаблона промта, справа место под запись экрана -->
+  <!-- Онлайн: сначала выбор пути. Новый ролик: шаблон одним полем, ответ ИИ в плеер. Свой ролик: файл в плеер. Всё делает reel.js -->
   <section data-panel="online" class="on">
-    <div class="split">
-      <ol class="steps">
-        <li><span class="n">1</span><div>
-          <h3>Опишите ролик</h3>
-          <p>Ненужные поля оставьте пустыми, в&nbsp;сообщение они не попадут</p>
-          <form class="brief" autocomplete="off" style="margin-top:22px">
-            <div class="group">
-              <h4>О&nbsp;ролике</h4>
-              <div class="field"><label>Тема</label><input data-k="Тема" placeholder="О чём ролик, одной фразой"></div>
-              <div class="field"><label>Для кого и&nbsp;где покажем</label><input data-k="Для кого и где покажем" placeholder="Например, коллеги на встрече, канал, конкурс"></div>
-              <div class="cols">
-                <div class="field"><label>Длительность</label><input data-k="Длительность" placeholder="Около 20 секунд"></div>
-                <div class="field"><label>Формат</label><select data-k="Формат"><option>16:9 для презентации</option><option>Вертикальный 9:16 для Telegram и сторис</option></select></div>
-              </div>
-              <div class="field"><label>Музыка</label><input data-k="Музыка" placeholder="Темп, например 120 ударов в минуту, или «без музыки»"></div>
-            </div>
-            <div class="group">
-              <h4>Сцены по порядку</h4>
-              <div class="field"><label>Одна строка это одна сцена, в&nbsp;скобках длительность, если важна</label><textarea data-k="Сцены" rows="4" placeholder="Плагины для Pixso (2 с)&#10;Слайды в PowerPoint&#10;Градиенты в один клик"></textarea></div>
-            </div>
-            <div class="group">
-              <h4>Референс</h4>
-              <div class="field"><label>Ссылка или описание словами</label><input data-k="Референс" placeholder="Например, реклама Apple, ссылка на ролик"></div>
-              <div class="field"><label>Что взять из&nbsp;референса</label><input data-k="Что взять из референса" placeholder="Ритм, склейки, подача текста, цвет, что-то одно"></div>
-            </div>
-            <div class="group">
-              <h4>Бренд</h4>
-              <div class="field"><label>Шрифт</label><input data-k="Шрифт" placeholder="Название и начертания, например SB Sans Display, Bold и Semibold"></div>
-              <div class="cols4">
-                <div class="field color"><label>Фон</label><input data-k="Фон" placeholder="#000000"></div>
-                <div class="field color"><label>Текст</label><input data-k="Текст" placeholder="#FFFFFF"></div>
-                <div class="field color"><label>Акцент</label><input data-k="Акцент" placeholder="#21A038"></div>
-                <div class="field color"><label>Ещё цвета</label><input data-k="Дополнительные цвета" placeholder="#hex, #hex"></div>
-              </div>
-            </div>
-            <div class="group">
-              <h4>Движение</h4>
-              <div class="field"><label>Стиль</label><select data-k="Движение"><option value="пресет «Короткие фразы как в рекламе Apple» из инструкции">Пресет «Короткие фразы как в&nbsp;рекламе Apple»</option><option value="стиль со страницы «Приёмы движения», его правила и код в конце сообщения">Стиль со&nbsp;страницы «Приёмы движения»</option><option value="">Опишу своё ниже</option></select></div>
-              <div class="field"><label>Приёмы</label><input data-k="Приёмы" placeholder="Например, «Кольцо прогресса» в сцене 3"></div>
-              <div class="field"><label>Своё про движение</label><input data-k="Своё про движение" placeholder="Например, цифры набегают от нуля, в финале логотип по центру"></div>
-              <div class="field"><label>Чего не делать</label><input data-k="Чего не делать" placeholder="Например, без иконок, без эмодзи, без слов на английском"></div>
-            </div>
-          </form>
-          <button class="btn" data-brief>Скопировать для чата</button>
-          <p class="note">Скопирует инструкцию для ИИ и&nbsp;ваш ролик одним сообщением</p>
-        </div></li>
-        <li><span class="n">2</span><div>
-          <h3>Отправьте в&nbsp;свой чат</h3>
-          <p>Откройте GigaChat, ChatGPT или Claude, вставьте сообщение и&nbsp;отправьте. ИИ ответит кодом ролика</p>
-        </div></li>
-        <li><span class="n">3</span><div>
-          <h3>Вставьте ответ сюда</h3>
-          <p>Скопируйте ответ ИИ целиком, вместе с&nbsp;текстом вокруг кода</p>
-          <div class="field answer"><textarea placeholder="Ответ ИИ"></textarea></div>
-          <div class="row" style="margin-top:12px"><a class="btn" href="Окно ролика.html">Открыть в&nbsp;плеере</a><a class="btn ghost" href="Окно ролика.html">или открыть сохранённый ролик</a></div>
-        </div></li>
-      </ol>
-      <div class="side">
-        <div class="rec">Здесь будет запись экрана: как описать ролик, отправить в&nbsp;чат и&nbsp;вставить ответ</div>
+    <div class="paths"><button data-way-btn="new" class="on" aria-pressed="true">Новый ролик</button><button data-way-btn="have" aria-pressed="false">У&nbsp;меня уже есть ролик</button></div>
+
+    <div data-way="new">
+      <div class="split">
+        <ol class="steps">
+          <li><span class="n">1</span><div>
+            <h3>Опишите ролик</h3>
+            <p>Впишите своё вместо текста в&nbsp;квадратных скобках, ненужные строки удалите</p>
+            <div class="field tpl"><textarea id="tpl" spellcheck="true" aria-label="Описание ролика"></textarea></div>
+            <div class="row" style="margin-top:12px"><button class="btn" data-copy-brief>Скопировать для чата</button><button class="btn ghost" data-download>Скачать файлом</button><span class="grow"></span><button class="btn ghost" data-reset hidden>Вернуть шаблон</button></div>
+            <p class="note">Инструкция для ИИ и&nbsp;ваш ролик одним сообщением. В&nbsp;файле то&nbsp;же самое</p>
+          </div></li>
+          <li><span class="n">2</span><div>
+            <h3>Отправьте в&nbsp;свой чат</h3>
+            <p>Откройте GigaChat, ChatGPT или Claude, вставьте сообщение или приложите файл и&nbsp;отправьте. ИИ ответит кодом ролика</p>
+          </div></li>
+          <li><span class="n">3</span><div>
+            <h3>Вставьте ответ сюда</h3>
+            <p>Скопируйте ответ ИИ целиком, вместе с&nbsp;текстом вокруг кода</p>
+            <div class="field answer"><textarea id="answer" spellcheck="false" placeholder="Ответ ИИ"></textarea></div>
+            <div class="row" style="margin-top:12px"><button class="btn" data-play>Открыть в&nbsp;плеере</button></div>
+            <p class="msg" id="answerMsg" aria-live="polite"></p>
+          </div></li>
+        </ol>
+        <div class="side">
+          <div class="rec">Здесь будет запись экрана: как описать ролик, отправить в&nbsp;чат и&nbsp;вставить ответ</div>
+        </div>
+      </div>
+
+      <div class="after">
+        <h3>Дальше в&nbsp;плеере</h3>
+        <p class="mute">Встаньте на нужную секунду и&nbsp;нажмите «Для ИИ», запрос с&nbsp;кодом сцены скопируется сам. Сдвиги и&nbsp;текст правятся прямо в&nbsp;кадре. Плеер помнит последний ролик в&nbsp;этом браузере, а&nbsp;«Сохранить» запишет его файлом к&nbsp;вам на компьютер</p>
+        <p class="mute">Стиль движения можно взять на странице <a href="#" data-toast="Ссылка на «Приёмы движения»">«Приёмы движения»</a></p>
       </div>
     </div>
 
-    <div class="after">
-      <h3>Дальше в&nbsp;плеере</h3>
-      <p class="mute">Встаньте на нужную секунду и&nbsp;нажмите «Для ИИ», запрос с&nbsp;кодом сцены скопируется сам. Сдвиги и&nbsp;текст правятся прямо в&nbsp;кадре. Плеер помнит последний ролик в&nbsp;этом браузере, а&nbsp;«Сохранить» запишет его файлом к&nbsp;вам на компьютер</p>
-      <p class="mute">Стиль движения можно взять на странице <a href="#" data-toast="Ссылка на «Приёмы движения»">«Приёмы движения»</a></p>
+    <div data-way="have" hidden>
+      <div class="split">
+        <div>
+          <div class="drop">
+            <p class="big">Перетащите сюда файл ролика</p>
+            <div class="row"><button class="btn" data-pick>Выбрать файл</button></div>
+          </div>
+          <p class="msg" id="haveMsg" aria-live="polite"></p>
+          <p class="note" id="last" hidden>Последний открытый ролик: <a href="#"></a></p>
+          <p class="note">Это HTML, который сохранил плеер. Файл остаётся в&nbsp;вашем браузере и&nbsp;в&nbsp;интернет не&nbsp;уходит</p>
+        </div>
+        <ol class="steps side">
+          <li><span class="n">1</span><div><h3>Откройте</h3><p>Ролик откроется здесь&nbsp;же, в&nbsp;плеере</p></div></li>
+          <li><span class="n">2</span><div><h3>Правьте</h3><p>На паузе нажмите <b>Правки</b> и&nbsp;тяните объекты. Двойной щелчок заходит на&nbsp;слой глубже и&nbsp;в&nbsp;текст, Esc на&nbsp;слой выше. <b>Для ИИ</b> соберёт правки в&nbsp;одно сообщение для чата</p></div></li>
+          <li><span class="n">3</span><div><h3>Сохраните</h3><p>Ответ ИИ вставьте кнопкой <b>Код</b>. <b>Сохранить</b> запишет ролик файлом</p></div></li>
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -101,7 +88,7 @@
       </div>
       <ol class="steps side">
         <li><span class="n">1</span><div><h3>Отправьте фразу</h3><p>Агент скачает пакет и&nbsp;прочитает инструкцию</p></div></li>
-        <li><span class="n">2</span><div><h3>Опишите ролик</h3><p>Заполните поля на вкладке «Онлайн», скопируйте и&nbsp;отправьте агенту вторым сообщением</p></div></li>
+        <li><span class="n">2</span><div><h3>Опишите ролик</h3><p>Заполните шаблон на вкладке «Онлайн», скопируйте и&nbsp;отправьте агенту вторым сообщением</p></div></li>
         <li><span class="n">3</span><div><h3>Смотрите в&nbsp;плеере</h3><p>Агент соберёт Ролик.html и&nbsp;откроет его. Нажмите «Связать с&nbsp;файлом», и&nbsp;правки агента будут появляться сами</p></div></li>
       </ol>
     </div>
@@ -117,6 +104,9 @@
     <span>Лицензия MIT</span>
   </div>
 </div>
-<script src="site.js"></script>
+<input type="file" id="reelIn" accept=".html,.htm,image/*,font/*,.woff,.woff2,.ttf,.otf" multiple hidden>
+<div id="drop">Отпустите, чтобы открыть ролик</div>
+<script src="site.js?v=202611060049"></script>
+<script src="reel.js?v=202611060049"></script>
 </body>
 </html>

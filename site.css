@@ -97,18 +97,31 @@ h2.far { margin-top: 168px; }
 .drop .row { justify-content: center; }
 .note { margin-top: 14px; font-size: 14px; color: var(--ui-mute); }
 
-/* Поля шаблона промта ролика */
-.group { margin: 0 0 30px; }
-.group h4 { margin: 0 0 2px; font-size: 15px; font-weight: 600; color: var(--ui-fg); }
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
-.cols4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 10px; }
+/* Поля: шаблон ролика и ответ ИИ */
 .field { margin: 12px 0 0; }
 .field label { display: block; margin: 0 0 6px; font-size: 14px; color: var(--ui-mute); }
 .field input, .field textarea, .field select { width: 100%; border: 0; border-radius: 6px; background: var(--ui-line); color: var(--ui-fg); padding: 10px 12px; font: inherit; resize: vertical; }
 .field input::placeholder, .field textarea::placeholder { color: #5E5F65; }
 .field select { appearance: none; cursor: pointer; }
-.field.color input { font-family: var(--mono); font-size: 14px; }
 .answer textarea { min-height: 150px; font: 13px/1.5 var(--mono); }
+
+/* Видео, вкладка «Онлайн»: выбор пути, шаблон одним полем, сообщения под кнопками (reel.js) */
+.paths { display: flex; flex-wrap: wrap; gap: 4px; margin: -12px 0 40px; }
+.paths button { appearance: none; border: 0; border-radius: 8px; background: none; color: var(--ui-mute); padding: 9px 16px; font-size: 17px; font-weight: 600; line-height: 1.3; cursor: pointer; }
+.paths button:hover { color: var(--ui-fg); }
+.paths button.on { background: var(--ui-line); color: var(--ui-fg); }
+[data-way][hidden] { display: none; }
+.tpl { margin-top: 18px; }
+.tpl textarea { min-height: 240px; padding: 14px 16px; font-size: 15px; line-height: 1.6; resize: none; overflow: hidden; }
+.row .grow { flex: 1; }
+.msg { margin: 12px 0 0; color: #F2C14E; }
+.msg:empty { display: none; }
+.msg a { color: inherit; }
+@media (max-width: 640px) {
+  .paths { flex-wrap: nowrap; gap: 2px; margin: -16px 0 32px; }
+  .paths button { padding: 8px 11px; font-size: 15px; white-space: nowrap; }
+  .tpl textarea { max-height: 64vh; padding: 12px 14px; overflow: auto; }
+}
 .rec { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; padding: 24px; border-radius: 12px; background: var(--tile); color: var(--ui-mute); text-align: center; font-size: 15px; }
 .after { margin-top: 64px; }
 .fmt { display: flex; flex-wrap: wrap; gap: 2px; }
@@ -233,7 +246,6 @@ pre.phrase { max-width: 760px; margin: 10px 0 10px; padding: 16px 18px; border-r
   .split { grid-template-columns: 1fr; }
   .split .side { position: static; }
   .drop { min-height: 220px; }
-  .cols, .cols4 { grid-template-columns: 1fr 1fr; }
 }
 @media (min-width: 641px) and (max-width: 900px) {
   .links { grid-template-columns: 1fr 1fr; }
