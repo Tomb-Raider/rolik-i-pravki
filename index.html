@@ -6,12 +6,36 @@
 <title>Ролик и правки в HTML</title>
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<!-- Яндекс Метрика: только посещения страниц сайта, без Вебвизора. В режим правок и плеер не ставить -->
+<!-- Яндекс Метрика: посещения, цели на главных кнопках, Вебвизор без полей ввода и имён файлов (их блоки с классом ym-hide-content).
+     Внизу страницы строка о статистике, её требуют условия Метрики. В режим правок и плеер счётчик не ставить -->
 <script>
 (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym');
-ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true});
+ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true});
+(function(){
+  var ID=114097970, GOALS=[
+    ['[data-open]','open_files'],
+    ['[data-copy-brief],[data-download],[data-copy="instr"]','copy_for_chat'],
+    ['[data-copy]','agent_phrase'],
+    ['[data-play],[data-pick]','reel_open'],
+    ['a[href*="/archive/"]','download_package']];
+  document.addEventListener('click',function(e){
+    var t=e.target; if(!t||!t.closest) return;
+    for(var i=0;i<GOALS.length;i++) if(t.closest(GOALS[i][0])){ ym(ID,'reachGoal',GOALS[i][1]); return }
+  },true);
+  document.addEventListener('dragstart',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('a.bm,[data-bm]')) ym(ID,'reachGoal','bookmark');
+  },true);
+  document.addEventListener('DOMContentLoaded',function(){
+    var foot=document.querySelector('.foot'), box=foot||document.querySelector('.page,.site')||document.body;
+    var p=document.createElement(foot?'span':'p');
+    p.className='ym-note';
+    p.innerHTML='Сайт собирает статистику посещений через <a href="https://yandex.ru/legal/confidential/" style="color:inherit">Яндекс&nbsp;Метрику</a>. Ваши файлы и&nbsp;тексты, которые вы вставляете, в&nbsp;неё не&nbsp;попадают';
+    p.style.cssText=foot?'flex-basis:100%':'margin:96px 0 0;font-size:14px;color:var(--ui-mute)';
+    box.appendChild(p);
+  });
+})();
 </script>
-<link rel="stylesheet" href="site.css?v=202611060148">
+<link rel="stylesheet" href="site.css?v=202611060203">
 </head>
 <body>
 <div class="site">
@@ -59,6 +83,6 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true});
     <a href="#" data-toast="Ссылка на репозиторий"><b>GitHub</b><span>Исходники обоих пакетов, лицензия MIT</span></a>
   </div>
 </div>
-<script src="site.js?v=202611060148"></script>
+<script src="site.js?v=202611060203"></script>
 </body>
 </html>
