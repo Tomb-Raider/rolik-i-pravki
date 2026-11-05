@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ролик и правки в HTML</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div class="site">
+  <header class="s-top">
+    <a class="s-name" href="index.html"><img src="logo-white.svg" alt="">Ролик и&nbsp;правки в&nbsp;HTML</a>
+    <nav class="seg"><a class="on" href="index.html">Что это</a><a href="Презентация.html">Презентация или сайт</a><a href="Видео.html">Видео</a></nav>
+  </header>
+
+  <h1>Ролик и&nbsp;презентация в&nbsp;HTML вместе с&nbsp;вашим агентом</h1>
+  <p class="lead">Выберите, что делаете. Работать можно прямо здесь, онлайн, или с&nbsp;агентом в&nbsp;папке. Ставить ничего не нужно</p>
+
+  <div class="pair">
+    <div>
+      <!-- Пример правок: три курсора правят слайд одновременно. Сдвиг блока, правка заголовка, замечание к строке -->
+      <div class="ex"><div class="sl demo">
+        <b class="sl-t"><span class="t-old">Итоги квартала</span><span class="t-new">Итоги года<i class="caret"></i></span></b>
+        <i class="sl-guide"></i><i class="sl-img"></i>
+        <i class="sl-txt"></i><i class="sl-txt s2"></i><i class="sl-txt s3"></i>
+        <span class="sl-note">Крупнее</span>
+        <span class="cur cur-a"><svg viewBox="0 0 16 16"><path d="M1.5 1.5l5 12.5 1.9-5.1 5.1-1.9z"/></svg><em>Сдвиг</em></span>
+        <span class="cur cur-b"><svg viewBox="0 0 16 16"><path d="M1.5 1.5l5 12.5 1.9-5.1 5.1-1.9z"/></svg><em>Текст</em></span>
+        <span class="cur cur-c"><svg viewBox="0 0 16 16"><path d="M1.5 1.5l5 12.5 1.9-5.1 5.1-1.9z"/></svg><em>Замечание</em></span>
+        <span class="sl-bar"><b>Режим правок</b><span class="cnt"><i class="n0">0</i><i class="n2">2</i><i class="n3">3</i></span><span>Сетка</span><span>Список</span><span>Скопировать для чата</span></span>
+      </div></div>
+      <h2>Презентация или сайт</h2>
+      <p class="mute">Двигайте блоки и&nbsp;правьте текст прямо на странице. Все правки уходят ИИ одним сообщением</p>
+      <div class="row"><a class="btn ghost" href="Презентация.html#agent">С&nbsp;вашим агентом в&nbsp;папке</a><a class="btn" href="Презентация.html">Открыть онлайн</a></div>
+    </div>
+    <div>
+      <!-- Пример ролика: пресет «Короткие фразы как в рекламе Apple» из пакета, фразы про плагины -->
+      <div class="ex ex-apple" data-lines='[["Плагины", "для Pixso."], ["Слайды", "в PowerPoint."], ["Градиенты", "в один клик."], ["Таблицы", "без рутины."]]'><i class="ex-bar"></i></div>
+      <h2>Видео</h2>
+      <p class="mute">Ваш ИИ пишет сцены, плеер показывает ролик. Перемотка на&nbsp;любую секунду и&nbsp;правки прямо в&nbsp;кадре</p>
+      <div class="row"><a class="btn ghost" href="Видео.html#agent">С&nbsp;вашим агентом в&nbsp;папке</a><a class="btn" href="Видео.html">Открыть онлайн</a></div>
+    </div>
+  </div>
+
+  <h2 class="far">Полезные материалы</h2>
+  <div class="links">
+    <a href="#" data-toast="Ссылка на «Приёмы движения»"><b>Приёмы движения</b><span>Стили, 11 приёмов и&nbsp;6 принципов анимации вживую. У&nbsp;каждого источник и&nbsp;кнопка «Скопировать для ИИ»</span></a>
+    <a href="#" data-toast="Ссылка на «Как разобрать референс»"><b>Как разобрать референс</b><span>Как замерить чужой ролик по кадрам и&nbsp;описать движение словами</span></a>
+    <a href="#" data-toast="Ссылка на «Если что-то не так»"><b>Если что-то не так</b><span>Что видно в&nbsp;плеере и&nbsp;что написать ИИ, чтобы он поправил точно</span></a>
+    <a href="#" data-toast="Ссылка на «Как пользоваться»"><b>Как пользоваться</b><span>Оба способа по шагам: онлайн и&nbsp;агент в&nbsp;папке</span></a>
+    <a href="#" data-toast="Здесь скачается архив с обоими пакетами"><b>Скачать пакеты</b><span>Архив с&nbsp;обоими пакетами для работы в&nbsp;своей папке</span></a>
+    <a href="#" data-toast="Ссылка на репозиторий"><b>GitHub</b><span>Исходники обоих пакетов, лицензия MIT</span></a>
+  </div>
+</div>
+<script src="site.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Презентация или сайт · Ролик и правки в HTML</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div class="site">
+  <header class="s-top">
+    <a class="s-name" href="index.html"><img src="logo-white.svg" alt="">Ролик и&nbsp;правки в&nbsp;HTML</a>
+    <nav class="seg"><a href="index.html">Что это</a><a class="on" href="Презентация.html">Презентация или сайт</a><a href="Видео.html">Видео</a></nav>
+  </header>
+
+  <h1>Презентация или сайт</h1>
+  <p class="lead">Двигайте блоки, правьте текст и&nbsp;оставляйте замечания прямо на странице. Потом скачайте готовый файл или отдайте правки ИИ одним сообщением</p>
+
+  <nav class="tabs"><a class="on" href="#online">Онлайн</a><a href="#agent">Агент в&nbsp;папке</a><a href="#site">Сайт в&nbsp;интернете</a></nav>
+
+  <!-- Онлайн: слева куда перетащить, справа что будет по шагам -->
+  <section data-panel="online" class="on">
+    <div class="split">
+      <div>
+        <div class="drop">
+          <p class="big">Перетащите сюда папку с&nbsp;презентацией или сайтом</p>
+          <div class="row"><button class="btn" data-open="dir">Выбрать папку</button><button class="btn ghost" data-open="file">или один файл</button></div>
+        </div>
+        <div id="picked" aria-live="polite"></div>
+        <p class="note">Файлы остаются в&nbsp;вашем браузере и&nbsp;в&nbsp;интернет не уходят. Chrome при выборе папки спросит, загрузить&nbsp;ли файлы на сайт: это его обычный вопрос. Без вопроса можно просто перетащить папку</p>
+      </div>
+      <ol class="steps side">
+        <li><span class="n">1</span><div><h3>Откройте</h3><p>Страница откроется здесь же, уже в&nbsp;режиме правок</p></div></li>
+        <li><span class="n">2</span><div><h3>Правьте</h3><p>Тяните блоки мышью, текст правится двойным щелчком, Alt + щелчок оставляет замечание</p></div></li>
+        <li><span class="n">3</span><div><h3>Сохраните</h3><p><b>Скачать</b> отдаст готовый файл с&nbsp;вашими правками, ИИ не нужен</p><p class="or">Если есть замечания словами или правка сложная, <b>Отдать ИИ</b> соберёт всё в&nbsp;одно сообщение для чата. Ответ ИИ вставьте кнопкой <b>Вставить ответ ИИ</b></p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Агент в папке: фраза для агента и что он сделает -->
+  <section data-panel="agent">
+    <div class="split">
+      <div class="agent">
+        <p class="mute">Для Claude Code, Codex, Cursor, GigaCode. Отправьте фразу агенту из&nbsp;папки с&nbsp;презентацией</p>
+        <pre class="phrase">Включи режим правок для этой папки. Возьми его с github.com/Tomb-Raider/rezhim-pravok и сделай всё по его «Инструкции для ИИ». Правки, которые я потом пришлю, вноси по ней же</pre>
+        <button class="btn" data-copy>Скопировать фразу</button>
+      </div>
+      <ol class="steps side">
+        <li><span class="n">1</span><div><h3>Отправьте фразу</h3><p>Агент скачает режим правок и&nbsp;откроет страницу в&nbsp;браузере. Нужен Python 3</p></div></li>
+        <li><span class="n">2</span><div><h3>Правьте</h3><p>Так же, как онлайн: тяните, правьте текст, оставляйте замечания</p></div></li>
+        <li><span class="n">3</span><div><h3>Отдайте правки агенту</h3><p>«Скопировать правки» и&nbsp;вставьте в&nbsp;чат с&nbsp;агентом. Он сам внесёт их в&nbsp;файлы</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Сайт в интернете: закладка включает режим на открытом сайте -->
+  <section data-panel="site">
+    <div class="split">
+      <div>
+        <div class="drop">
+          <p class="big">Перетащите кнопку на&nbsp;панель закладок</p>
+          <a class="bm" href="javascript:(function(){if(window.__pravki)return;var s=document.createElement('script');s.src='https://tomb-raider.github.io/rezhim-pravok/pravki.js?v='+Date.now();s.setAttribute('data-auto','1');document.documentElement.appendChild(s);})()">Режим правок</a>
+        </div>
+        <p class="note">Закладка включает режим правок прямо на открытом сайте, даже если его файлов у&nbsp;вас нет. Сайт не меняется, правки видите только вы</p>
+      </div>
+      <ol class="steps side">
+        <li><span class="n">1</span><div><h3>Добавьте закладку</h3><p>Перетащите кнопку «Режим правок» на&nbsp;панель закладок. Если панели не видно, Cmd + Shift + B на&nbsp;Mac или Ctrl + Shift + B на&nbsp;Windows</p></div></li>
+        <li><span class="n">2</span><div><h3>Откройте сайт и&nbsp;нажмите закладку</h3><p>Внизу появится панель режима правок</p></div></li>
+        <li><span class="n">3</span><div><h3>Отдайте правки</h3><p>«Скопировать правки» соберёт всё одним текстом. Отправьте его тому, кто делает сайт, или ИИ вместе с&nbsp;файлами сайта</p></div></li>
+      </ol>
+    </div>
+    <p class="note">Некоторые большие сайты своей защитой не пускают закладку</p>
+  </section>
+
+  <div class="foot">
+    <a href="#" data-toast="Ссылка на «Как пользоваться»">Как пользоваться</a>
+    <a href="#" data-toast="Здесь скачается архив с обоими пакетами">Скачать пакеты</a>
+    <a href="#" data-toast="Ссылка на репозиторий">GitHub</a>
+    <span>Лицензия MIT</span>
+  </div>
+</div>
+<input type="file" id="dirIn" webkitdirectory hidden>
+<input type="file" id="fileIn" accept=".html,.htm" multiple hidden>
+<div id="drop">Отпустите, чтобы открыть</div>
+<script src="site.js"></script>
+<script src="open.js"></script>
+</body>
+</html>

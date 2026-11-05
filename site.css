@@ -1,0 +1,240 @@
+/* Общий сайт двух пакетов, вариант Б (макет 04.11): сначала выбор «Презентация или сайт» или «Видео»,
+   на странице каждого оба способа, онлайн и агент в папке. Фон чёрный, шрифты SB Sans, установленные на компьютере */
+@font-face { font-family: "SB Sans Text"; font-weight: 400; src: local("SBSansText-Regular"), local("SB Sans Text Regular"); }
+@font-face { font-family: "SB Sans Text"; font-weight: 500; src: local("SBSansText-Medium"), local("SB Sans Text Medium"); }
+@font-face { font-family: "SB Sans Text"; font-weight: 600; src: local("SBSansText-Semibold"), local("SB Sans Text Semibold"); }
+@font-face { font-family: "SB Sans Display Extended"; font-weight: 600; src: local("SBSansDisplay-ExtendedSemibold"), local("SB Sans Display Extended Semibold"); }
+:root {
+  --ui-bg: #000000; --ui-fg: #ECECEE; --ui-mute: #86878D; --ui-line: #232428; --ui-line2: #393A40;
+  --tile: #111214; --blue: #3D7CFF; --pink: #FF3D8B;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --display: "SB Sans Display Extended", "SB Sans Text", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { background: var(--ui-bg); color: var(--ui-fg); }
+body {
+  margin: 0; background: var(--ui-bg); color: var(--ui-fg);
+  font: 16px/1.55 "SB Sans Text", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; }
+
+.site { max-width: 1120px; margin: 0 auto; padding: 28px 24px 120px; }
+.s-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 72px; }
+.s-name { display: inline-flex; align-items: center; gap: 10px; color: var(--ui-fg); font-weight: 600; text-decoration: none; }
+.s-name img { display: block; width: auto; height: 22px; }
+
+/* Открыть свою папку: что открылось, список страниц, затемнение при перетаскивании (open.js) */
+#picked { margin: 14px 0 0; }
+#picked:empty { display: none; }
+#picked p { margin: 0 0 6px; }
+#picked ul { list-style: none; padding: 0; margin: 8px 0 0; }
+#picked li { margin: 0 0 6px; }
+#picked li a { font-weight: 600; }
+#picked .warn { color: #F2C14E; }
+#drop { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center;
+  background: rgba(18, 19, 22, .86); font: 600 28px/1.2 var(--display); pointer-events: none; }
+#drop.on { display: flex; }
+/* Вкладки сегментами: «Что это», «Презентация или сайт», «Видео» */
+.seg { display: inline-flex; gap: 2px; padding: 4px; border-radius: 10px; background: #1A1B1E; font-size: 15px; }
+.seg a { padding: 7px 16px; border-radius: 7px; color: #B4B5BA; text-decoration: none; text-align: center; line-height: 1.3; }
+.seg a:hover { color: var(--ui-fg); }
+.seg a.on { background: var(--ui-fg); color: var(--ui-bg); font-weight: 600; }
+
+h1, h2 { font-family: var(--display); font-weight: 600; letter-spacing: 0; }
+h1 { margin: 0 0 18px; font-size: 46px; line-height: 1.1; }
+h2 { margin: 96px 0 12px; font-size: 28px; line-height: 1.2; scroll-margin-top: 24px; }
+h3 { margin: 0 0 6px; font-size: 19px; line-height: 1.3; font-weight: 600; }
+p { margin: 0 0 14px; max-width: 740px; }
+a { color: var(--ui-fg); text-underline-offset: 3px; text-decoration-color: var(--ui-line2); }
+.lead { max-width: 760px; margin: 0 0 20px; font-size: 20px; line-height: 1.5; color: var(--ui-mute); }
+.mute { color: var(--ui-mute); }
+
+.btn { appearance: none; display: inline-block; border: 0; border-radius: 6px; padding: 8px 15px; cursor: pointer; background: var(--ui-fg); color: var(--ui-bg); font-size: 15px; line-height: 1.4; text-decoration: none; }
+.btn:hover { opacity: .9; }
+.btn.ghost { background: none; color: var(--ui-mute); padding: 8px 8px; }
+.btn.ghost:hover { color: var(--ui-fg); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 48px 32px; margin: 48px 0 0; }
+.pair h2 { margin: 18px 0 8px; font-size: 26px; }
+.pair .row { justify-content: flex-end; }
+
+/* Полезные материалы: название ссылкой и строка, что внутри */
+.links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 32px; margin-top: 28px; }
+.links a { display: block; text-decoration: none; }
+.links b { display: block; margin-bottom: 6px; font-size: 18px; font-weight: 600; color: var(--ui-fg); text-decoration: underline; text-decoration-color: var(--ui-line2); text-underline-offset: 4px; }
+.links a:hover b { text-decoration-color: var(--ui-fg); }
+.links span { display: block; color: var(--ui-mute); font-size: 15px; line-height: 1.5; }
+
+h2.far { margin-top: 168px; }
+
+/* Табы способов на всю ширину: «Онлайн», «Агент в папке», «Сайт в интернете» */
+.tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin: 56px 0 48px; box-shadow: inset 0 -1px 0 var(--ui-line); }
+.tabs a { padding: 14px 4px 16px; color: var(--ui-mute); font: 600 20px/1.3 var(--display); text-align: center; text-decoration: none; }
+.tabs a:hover { color: var(--ui-fg); }
+.tabs a.on { color: var(--ui-fg); box-shadow: inset 0 -2px 0 var(--ui-fg); }
+[data-panel] { display: none; }
+[data-panel].on { display: block; }
+
+/* Две колонки: слева дело (куда перетащить, поля), справа шаги или запись экрана */
+.split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 48px 56px; align-items: start; }
+.split .side { position: sticky; top: 24px; }
+
+/* Шаги с номером: что будет, по порядку */
+.steps { margin: 0; padding: 0; list-style: none; }
+.steps li { display: grid; grid-template-columns: 36px 1fr; margin: 0 0 28px; }
+.steps .n { font: 600 22px/1.2 var(--display); color: var(--ui-line2); }
+.steps h3 { margin-bottom: 4px; }
+.steps p { margin: 0; color: var(--ui-mute); }
+.steps .or { margin-top: 10px; }
+.steps b { color: var(--ui-fg); font-weight: 600; }
+.ws-tools .btn { margin-left: 6px; padding: 7px 14px; background: var(--ui-fg); color: var(--ui-bg); }
+.ws-tools .btn:hover { background: var(--ui-fg); color: var(--ui-bg); opacity: .9; }
+
+.drop { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 360px; padding: 36px 24px; border-radius: 12px; background: var(--tile); color: var(--ui-mute); text-align: center; }
+.drop .big { margin: 0 0 18px; color: var(--ui-fg); font: 600 22px/1.3 var(--display); }
+.drop .row { justify-content: center; }
+.note { margin-top: 14px; font-size: 14px; color: var(--ui-mute); }
+
+/* Поля шаблона промта ролика */
+.group { margin: 0 0 30px; }
+.group h4 { margin: 0 0 2px; font-size: 15px; font-weight: 600; color: var(--ui-fg); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.cols4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 10px; }
+.field { margin: 12px 0 0; }
+.field label { display: block; margin: 0 0 6px; font-size: 14px; color: var(--ui-mute); }
+.field input, .field textarea, .field select { width: 100%; border: 0; border-radius: 6px; background: var(--ui-line); color: var(--ui-fg); padding: 10px 12px; font: inherit; resize: vertical; }
+.field input::placeholder, .field textarea::placeholder { color: #5E5F65; }
+.field select { appearance: none; cursor: pointer; }
+.field.color input { font-family: var(--mono); font-size: 14px; }
+.answer textarea { min-height: 150px; font: 13px/1.5 var(--mono); }
+.rec { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; padding: 24px; border-radius: 12px; background: var(--tile); color: var(--ui-mute); text-align: center; font-size: 15px; }
+.after { margin-top: 64px; }
+.fmt { display: flex; flex-wrap: wrap; gap: 2px; }
+.fmt button { appearance: none; border: 0; border-radius: 6px; background: none; color: var(--ui-mute); padding: 7px 12px; cursor: pointer; }
+.fmt button.on { background: var(--ui-line); color: var(--ui-fg); }
+.bm { display: inline-block; padding: 7px 14px; border-radius: 6px; background: var(--ui-line); color: var(--ui-fg); text-decoration: none; font-size: 15px; cursor: grab; }
+pre.phrase { max-width: 760px; margin: 10px 0 10px; padding: 16px 18px; border-radius: 8px; background: var(--ui-line); font: 14px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.agent { max-width: 760px; margin-top: 28px; }
+.foot { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 96px; font-size: 14px; color: var(--ui-mute); }
+.foot a { color: var(--ui-mute); text-decoration: none; }
+.foot a:hover { color: var(--ui-fg); }
+
+/* Живые примеры. Режим правок: блок едет и прилипает к краю заголовка. Ролик: пресет Apple, его рисует site.js */
+.ex { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 4px; background: #0B0D10; container-type: inline-size; }
+.ex-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: rgba(255, 255, 255, .3); }
+
+.sl { position: absolute; inset: 0; background: #F2F2F4; color: #16171A; }
+.sl-t { position: absolute; left: 8%; top: 11%; font: 600 5cqw/1.1 var(--display); }
+.sl-img { position: absolute; left: 8%; top: 32%; width: 34%; height: 46%; border-radius: 1cqw; background: #8FB4FF; outline: .35cqw solid var(--blue); outline-offset: .5cqw; animation: slmove 6s infinite ease-in-out; }
+@keyframes slmove { 0%, 14% { left: 17%; } 44% { left: 9%; } 50%, 80% { left: 8%; } 100% { left: 17%; } }
+.sl-guide { position: absolute; left: calc(8% - .15cqw); top: 5%; bottom: 5%; width: .3cqw; background: var(--pink); opacity: 0; animation: guide 6s infinite; }
+@keyframes guide { 0%, 47% { opacity: 0; } 50%, 78% { opacity: 1; } 82%, 100% { opacity: 0; } }
+.sl-txt { position: absolute; left: 52%; top: 34%; width: 38%; height: 2.6cqw; border-radius: .6cqw; background: #C9CBD1; }
+.sl-txt.s2 { top: 44%; width: 30%; }
+.sl-txt.s3 { top: 54%; width: 34%; }
+.sl-bar { position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%); display: flex; gap: 2.4cqw; padding: 1.3cqw 2.6cqw; border-radius: 99px; background: #17181B; color: #ECECEE; font: 500 1.9cqw/1 "SB Sans Text", system-ui, sans-serif; white-space: nowrap; }
+.sl-bar b { font-weight: 600; }
+
+/* Пример на главной: три курсора правят слайд одновременно, круг 8 с.
+   Синий тянет картинку к краю заголовка, зелёный правит заголовок, оранжевый оставляет замечание */
+.demo { --a: #3D7CFF; --b: #1FA855; --c: #FF7A1A; }
+.demo .sl-t { white-space: nowrap; }
+.demo .t-old { animation: t-old 8s infinite; border-radius: .4cqw; }
+.demo .t-new { position: absolute; left: 0; top: 0; opacity: 0; animation: t-new 8s infinite; }
+.demo .caret { display: inline-block; width: .3cqw; height: 1em; margin-left: .3cqw; vertical-align: -0.12em; background: var(--b); animation: caret 8s infinite; }
+@keyframes t-old { 0%, 17% { opacity: 1; background: transparent; } 18%, 27% { opacity: 1; background: rgba(31, 168, 85, .28); } 27.5%, 92% { opacity: 0; } 94%, 100% { opacity: 1; background: transparent; } }
+@keyframes t-new { 0%, 27% { opacity: 0; } 27.5%, 92% { opacity: 1; } 94%, 100% { opacity: 0; } }
+@keyframes caret { 0%, 27% { opacity: 0; } 27.5%, 31% { opacity: 1; } 32%, 35% { opacity: 0; } 36%, 40% { opacity: 1; } 41%, 100% { opacity: 0; } }
+
+.demo .sl-img { outline-color: transparent; animation: demo-move 8s infinite ease-in-out, demo-sel 8s infinite; }
+@keyframes demo-move { 0%, 10% { left: 17%; } 26% { left: 9%; } 27.5%, 92% { left: 8%; } 100% { left: 17%; } }
+@keyframes demo-sel { 0%, 7% { outline-color: transparent; } 8%, 32% { outline-color: var(--a); } 33%, 100% { outline-color: transparent; } }
+.demo .sl-guide { animation: demo-guide 8s infinite; }
+@keyframes demo-guide { 0%, 27% { opacity: 0; } 27.5%, 44% { opacity: 1; } 47%, 100% { opacity: 0; } }
+
+.demo .sl-txt.s2 { outline: .3cqw solid transparent; outline-offset: .5cqw; animation: demo-mark 8s infinite; }
+@keyframes demo-mark { 0%, 32% { outline-color: transparent; } 32.5%, 92% { outline-color: var(--c); } 94%, 100% { outline-color: transparent; } }
+.sl-note { position: absolute; left: 84%; top: 42.5%; padding: .7cqw 1.2cqw; border-radius: 1cqw 1cqw 1cqw .2cqw; background: var(--c); color: #fff; font: 600 1.7cqw/1 "SB Sans Text", system-ui, sans-serif; opacity: 0; transform-origin: 0 0; animation: demo-note 8s infinite; }
+@keyframes demo-note { 0%, 33% { opacity: 0; transform: scale(.6); } 35%, 92% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
+
+.cur { position: absolute; z-index: 3; width: 2.6cqw; height: 2.6cqw; }
+.cur svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.cur path { stroke: #fff; stroke-width: 1.2; stroke-linejoin: round; }
+.cur em { position: absolute; left: 1.9cqw; top: 2.1cqw; padding: .45cqw .8cqw; border-radius: .6cqw; color: #fff; font: 600 1.45cqw/1 "SB Sans Text", system-ui, sans-serif; font-style: normal; white-space: nowrap; }
+.cur-a path { fill: var(--a); } .cur-a em { background: var(--a); }
+.cur-b path { fill: var(--b); } .cur-b em { background: var(--b); }
+.cur-c path { fill: var(--c); } .cur-c em { background: var(--c); }
+.cur-a { animation: cur-a 8s infinite ease-in-out; }
+.cur-b { animation: cur-b 8s infinite ease-in-out; }
+.cur-c { animation: cur-c 8s infinite ease-in-out; }
+.cur-a svg { animation: press-a 8s infinite; }
+.cur-b svg { animation: press-b 8s infinite; }
+.cur-c svg { animation: press-c 8s infinite; }
+@keyframes cur-a { 0% { left: 58%; top: 92%; } 8%, 10% { left: 31%; top: 56%; } 26% { left: 23%; top: 56%; } 27.5%, 32% { left: 22%; top: 56%; } 45%, 90% { left: 45%; top: 64%; } 100% { left: 58%; top: 92%; } }
+@keyframes press-a { 0%, 9% { transform: none; } 10%, 27.5% { transform: scale(.82); } 29%, 100% { transform: none; } }
+@keyframes cur-b { 0% { left: 92%; top: 6%; } 15%, 27.5% { left: 34%; top: 15%; } 45%, 90% { left: 56%; top: 24%; } 100% { left: 92%; top: 6%; } }
+@keyframes press-b { 0%, 16% { transform: none; } 16.5% { transform: scale(.82); } 17% { transform: none; } 17.5% { transform: scale(.82); } 18%, 100% { transform: none; } }
+@keyframes cur-c { 0% { left: 96%; top: 78%; } 30%, 33% { left: 70%; top: 45%; } 50%, 90% { left: 86%; top: 70%; } 100% { left: 96%; top: 78%; } }
+@keyframes press-c { 0%, 32% { transform: none; } 32.5% { transform: scale(.82); } 33.5%, 100% { transform: none; } }
+
+.sl-bar .cnt { position: relative; display: inline-block; min-width: 2.2cqw; padding: 0 .5cqw; border-radius: 99px; background: #2E2F34; text-align: center; }
+.sl-bar .cnt i { font-style: normal; opacity: 0; }
+.sl-bar .cnt .n0 { position: relative; animation: n0 8s infinite; }
+.sl-bar .cnt .n2, .sl-bar .cnt .n3 { position: absolute; left: 0; right: 0; }
+.sl-bar .cnt .n2 { animation: n2 8s infinite; }
+.sl-bar .cnt .n3 { animation: n3 8s infinite; }
+@keyframes n0 { 0%, 27% { opacity: 1; } 27.5%, 92% { opacity: 0; } 94%, 100% { opacity: 1; } }
+@keyframes n2 { 0%, 27% { opacity: 0; } 27.5%, 32% { opacity: 1; } 32.5%, 100% { opacity: 0; } }
+@keyframes n3 { 0%, 32% { opacity: 0; } 32.5%, 92% { opacity: 1; } 94%, 100% { opacity: 0; } }
+
+/* Пример ролика: пресет «Короткие фразы как в рекламе Apple». Строки рисует site.js по времени, как плеер */
+.ex-apple .line { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff;
+  font: 600 7.4cqw/1.25 var(--display); letter-spacing: -0.015em; white-space: nowrap; }
+.ex-apple .add { display: flex; justify-content: flex-end; overflow: hidden; }
+.ex-apple .add > span { flex: none; }
+
+/* Окно работы: так откроется страница или ролик после «Открыть папку» и «Вставить ответ ИИ» */
+.ws { max-width: 1120px; margin: 0 auto; padding: 18px 24px 64px; }
+.ws-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 18px; font-size: 14px; color: var(--ui-mute); }
+.ws-top b { color: var(--ui-fg); font-weight: 600; font-size: 15px; }
+.ws-tools { display: flex; flex-wrap: wrap; gap: 2px 4px; align-items: center; }
+.ws-tools button, .ws-tools a { appearance: none; border: 0; background: none; color: var(--ui-mute); padding: 6px 8px; border-radius: 6px; cursor: pointer; text-decoration: none; }
+.ws-tools button:hover, .ws-tools a:hover { color: var(--ui-fg); background: var(--ui-line); }
+.ws .ex { max-width: 960px; margin: 0 auto; }
+.ws-cap { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; width: fit-content; max-width: 100%; margin: 20px auto 0; padding: 6px 10px; border-radius: 22px; background: #17181B; font-size: 14px; }
+.ws-cap button { appearance: none; border: 0; background: none; color: var(--ui-mute); padding: 6px 9px; border-radius: 14px; cursor: pointer; }
+.ws-cap button:hover { color: var(--ui-fg); background: var(--ui-line); }
+.ws-cap .main { color: var(--ui-fg); }
+.ws-cap .name { color: var(--ui-fg); font-weight: 600; padding: 6px 9px; }
+.tl { position: relative; display: flex; gap: 3px; max-width: 960px; margin: 14px auto 0; }
+.tl i { flex: 1; padding: 8px 10px; border-radius: 4px; background: var(--ui-line); color: var(--ui-mute); font-style: normal; font-size: 13px; }
+.tl .head { position: absolute; top: -5px; bottom: -5px; left: 0; width: 2px; padding: 0; background: #fff; }
+.ws-note { max-width: 960px; margin: 14px auto 0; font-size: 14px; color: var(--ui-mute); }
+
+.toast { position: fixed; left: 50%; bottom: 24px; z-index: 10; transform: translate(-50%, 12px); max-width: min(560px, calc(100vw - 32px)); padding: 11px 16px; border-radius: 8px; background: #2A2B30; color: var(--ui-fg); font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 640px) {
+  .site { padding: 20px 16px 96px; }
+  .ws { padding: 16px 16px 48px; }
+  .s-top { margin-bottom: 44px; }
+  h1 { font-size: 34px; }
+  h2 { font-size: 25px; margin-top: 72px; }
+  .lead { font-size: 18px; }
+  .pair { grid-template-columns: 1fr; }
+  .pair .row { justify-content: flex-start; }
+  .links { grid-template-columns: 1fr; gap: 24px; }
+  .seg { display: flex; width: 100%; font-size: 14px; }
+  .seg a { flex: 1; padding: 7px 8px; }
+  h2.far { margin-top: 112px; }
+  .tabs a { font-size: 15px; padding: 12px 2px 14px; }
+  .split { grid-template-columns: 1fr; }
+  .split .side { position: static; }
+  .drop { min-height: 220px; }
+  .cols, .cols4 { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+  .links { grid-template-columns: 1fr 1fr; }
+}

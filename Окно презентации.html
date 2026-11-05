@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Окно презентации · Ролик и правки в HTML</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div class="ws">
+  <!-- Сверху что открыто и чем закончить: скачать готовый файл или отдать ИИ -->
+  <div class="ws-top">
+    <div><b>Итоги квартала.html</b> <span>· 3&nbsp;правки, хранятся в&nbsp;этом браузере</span></div>
+    <div class="ws-tools">
+      <a href="Презентация.html">Вернуться на&nbsp;сайт</a>
+      <button data-toast="Скопирует инструкцию, правки и код страницы одним сообщением. Вставьте его в свой чат">Отдать ИИ</button>
+      <button data-toast="Откроется поле для ответа ИИ. Страница обновится по исправленному файлу">Вставить ответ ИИ</button>
+      <button class="btn" data-toast="Скачается «Итоги квартала.html» с вашими правками. Если правили несколько страниц, придёт архив">Скачать с&nbsp;правками</button>
+    </div>
+  </div>
+  <div class="ex"><div class="sl">
+    <b class="sl-t">Итоги квартала</b>
+    <i class="sl-guide"></i><i class="sl-img"></i>
+    <i class="sl-txt"></i><i class="sl-txt s2"></i><i class="sl-txt s3"></i>
+  </div></div>
+  <div class="ws-cap">
+    <span class="name">Режим правок</span>
+    <button data-toast="Назад и вперёд по правкам">Назад</button>
+    <button data-toast="Сетка: клетка или колонки">Сетка</button>
+    <button data-toast="Телефон: страница шириной 390 px">Телефон</button>
+    <button data-toast="Список всех правок страницы">Список</button>
+  </div>
+  <p class="ws-note" style="text-align:center">«Скачать с&nbsp;правками» отдаст этот же файл, где уже стоят ваши сдвиги и&nbsp;новый текст. Замените им старый. Замечания словами в&nbsp;файл не попадут, их отдайте ИИ</p>
+</div>
+<script src="site.js"></script>
+</body>
+</html>
