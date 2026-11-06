@@ -786,6 +786,9 @@ function topNames(code) {
 // Сцена и объявление с тем же именем встают туда, где стояли старые, новое уходит в конец.
 // Так в файле каждая сцена один раз, а длительности из плеера остаются последней частью
 const norm = code => lex(code).map(t => t.v).join(' ')
+// То же, но пробелы и переносы внутри строк и шаблонов тоже не в счёт: у ИИ отступ внутри `...` бывает другим
+const loose = code => lex(code).map(t => t.t === 's' ? t.v.replace(/\s+/g, ' ') : t.v).join(' ')
+const ws = s => String(s).replace(/\s+/g, ' ').trim()
 function offsetOf(code, line, col) {
   let i = 0
   for (let l = 1; l < line; l++) { i = code.indexOf('\n', i); if (i < 0) return -1; i++ }
@@ -828,7 +831,7 @@ function foldTwo(a, b, flags) {
     const hit = live().filter(o => o.u.names.some(n => v.names.includes(n)))
     if (hit.some(o => o.u.scenes || o.u.reels || o.u.names.some(n => !v.names.includes(n)))) return null
     if (!hit.length) continue
-    if (norm(textOf(v)) !== norm(hit[0].text)) { put(hit[0], v); flags.decl = true } else hit[0].keep = true
+    if (loose(textOf(v)) !== loose(hit[0].text)) { put(hit[0], v); flags.decl = true; (flags.names = flags.names || []).push(...v.names) } else hit[0].keep = true
     hit.slice(1).forEach(o => { o.text = null })
     v.done = true
   }
@@ -880,11 +883,12 @@ function foldTwo(a, b, flags) {
   return pieces.map((p, i) => i ? guard(/^\s*\n/.test(p) ? p : '\n\n' + p) : p).join('').replace(/^\s*\n/, '') + A.tail
 }
 // Склеенный ролик тот же, что был бы из отдельных частей: сцены по порядку, их код и настройки.
+// Пробелы в html и css, отступы и комментарии в draw не в счёт.
 // Если вставили другое общее объявление, оно действует на весь ролик, как в одном файле.
 // Тогда html, css и длительности сцен могут стать другими, сверяем порядок сцен и их draw
 function sameReel(a, b, flags) {
   if (a.scenes.length !== b.scenes.length) return false
-  const sig = s => JSON.stringify(flags.decl ? [s.name, String(s.draw)] : [s.name, s.dur, s.html, s.css, s.note, String(s.draw)])
+  const sig = s => JSON.stringify(flags.decl ? [s.name, norm(String(s.draw))] : [s.name, s.dur, ws(s.html), ws(s.css), s.note, norm(String(s.draw))])
   if (a.scenes.some((s, i) => sig(s) !== sig(b.scenes[i]))) return false
   const o = a.opts, p = b.opts
   if (o.grid !== p.grid || JSON.stringify(o.lengths) !== JSON.stringify(p.lengths)) return false
@@ -892,7 +896,35 @@ function sameReel(a, b, flags) {
   if (['title', 'fps', 'width', 'height'].some(k => o[k] !== p[k])) return false
   return !!flags.reel || o.css.join('\n') === p.css.join('\n')
 }
-// Части base плюс вставленные части add. Возвращает части ролика, собранный ролик и сцены из add.
+// Блок { ... } верхнего уровня раскрываем: в такой блок ИИ иногда кладёт общие куски вместе со сценами.
+// Раскрытый, он ставит каждую сцену на её место, даже если между ними в ролике стоит другая сцена,
+// а общие куски из него заменяют такие же в ролике. Отступ внутри блока убираем, строки шаблонов `...` не трогаем
+function openBlocks(code) {
+  let out = '', at = 0
+  for (const st of statements(code)) {
+    const t = st.toks, a = t[0], z = t[t.length - 1]
+    if (t.length < 2 || a.v !== '{' || z.v !== '}' || z.d !== 0 || closer(t, 0) !== t.length - 1) continue
+    out += code.slice(at, a.s) + dedent(code, a.e, z.s, t)
+    at = z.e
+  }
+  return at ? openBlocks(out + code.slice(at)) : code
+}
+function dedent(code, from, to, toks) {
+  const tpl = toks.filter(q => q.t === 's' && code[q.s] === '`')
+  const inTpl = i => tpl.some(q => q.s < i && i < q.e)
+  const starts = []
+  for (let i = code.indexOf('\n', from); i >= 0 && i < to; i = code.indexOf('\n', i + 1)) if (!inTpl(i + 1)) starts.push(i + 1)
+  const pad = i => { let k = i; while (k < to && (code[k] === ' ' || code[k] === '\t')) k++; return k - i }
+  const full = starts.filter(i => { const k = i + pad(i); return k < to && code[k] !== '\n' })
+  const cut = full.length ? Math.min(...full.map(pad)) : 0
+  if (!cut) return code.slice(from, to)
+  let out = '', at = from
+  for (const i of starts) { out += code.slice(at, i); at = i + Math.min(cut, pad(i)) }
+  return out + code.slice(at, to)
+}
+
+// Части base плюс вставленные части add. Возвращает части ролика, собранный ролик и сцены из add,
+// folded, если всё склеилось в одну часть, и shared, какие общие куски заменились.
 // Если склеить в одну часть нельзя, вставленное остаётся отдельной частью перед длительностями
 function mergeParts(base, add) {
   const isL = c => c.label === LENGTHS
@@ -901,17 +933,21 @@ function mergeParts(base, add) {
   const ref = body.concat(more, lens), refRes = build(ref)
   const touched = refRes.per.slice(body.length, body.length + more.length).flatMap(p => p.names)
   if (!more.length) return { list: ref, res: refRes, touched }
-  const flags = {}
-  let code = null
-  try {
-    code = body.concat(more).map(c => c.code).reduce((x, y) => x == null ? null : foldTwo(x, y, flags))
-  } catch (e) { code = null }
-  if (code != null) {
+  // Сначала с раскрытыми блоками { }, потом как прислали
+  const codes = body.concat(more).map(c => c.code), opened = codes.map((c, i) => i ? openBlocks(c) : c)
+  const tries = opened.some((c, i) => c !== codes[i]) ? [opened, codes] : [codes]
+  for (const list0 of tries) {
+    const flags = {}
+    let code = null
+    try {
+      code = list0.reduce((x, y) => x == null ? null : foldTwo(x, y, flags))
+    } catch (e) { code = null }
+    if (code == null) continue
     const list = [{ label: 'основа', code }].concat(lens)
     try {
       const res = build(list)
-      if (sameReel(res, refRes, flags)) return { list, res, touched }
-    } catch (e) { /* не склеилось, ниже как раньше */ }
+      if (sameReel(res, refRes, flags)) return { list, res, touched, folded: true, shared: flags.decl ? [...new Set(flags.names)] : [] }
+    } catch (e) { /* не склеилось, дальше как раньше */ }
   }
   const list = prune(ref, refRes)
   return { list, res: list.length === ref.length ? refRes : build(list), touched }
@@ -1411,18 +1447,30 @@ function stamp() {
   return `вставлено ${p(d.getDate())}.${p(d.getMonth() + 1)}, ${p(d.getHours())}:${p(d.getMinutes())}`
 }
 
+const NO_CODE = `В${NB}ответе нет кода ролика. Попросите ИИ прислать код ролика по${NB}инструкции одним блоком`
+const quoted = list => list.map(n => `«${n}»`).join(', ')
 function apply(raw, mode) {
   const code = cleanPaste(raw)
   if (!code.trim()) { msg.textContent = 'Вставьте код сцен'; return false }
-  if (!/\bscene\s*\(|\breel\s*\(/.test(code)) {
-    msg.textContent = `В${NB}коде нет scene(...). Похоже, ИИ написал страницу целиком. Попросите его: «Перепиши по${NB}инструкции, только reel и${NB}scene в${NB}одном блоке»`
-    return false
-  }
+  const calls = /\bscene\s*\(|\breel\s*\(/.test(code)
   const add = splitChunks(code)
+  // Без scene() и reel() годится только общий кусок ролика: функция или константа, которая в ролике уже есть.
+  // Он встаёт на место своего объявления и действует на все сцены, которые им пользуются
+  let shared = []
+  if (!calls && mode === 'put') {
+    const known = new Set(chunks.flatMap(c => topNames(c.code)))
+    shared = [...new Set(add.flatMap(c => topNames(openBlocks(c.code))))].filter(n => known.has(n))
+  }
+  if (!calls && !shared.length) { msg.textContent = NO_CODE; return false }
   if (mode === 'put') add.forEach((c, i) => { if (c.label === 'основа') c.label = stamp() + (add.length > 1 ? ` (${i + 1})` : '') })
   // Сцены и общие объявления встают на место старых, длительности из плеера остаются последней частью
   let m
   try { m = mergeParts(mode === 'replace' ? [] : chunks, add) } catch (e) { msg.textContent = e.message; return false }
+  if (!calls && !m.folded) {
+    const one = shared.length === 1
+    msg.textContent = `Не${NB}получилось заменить ${quoted(shared)} в${NB}ролике. Попросите ИИ прислать ${one ? 'его' : 'их'} вместе со${NB}сценой, которая ${one ? 'им' : 'ими'} пользуется`
+    return false
+  }
   const before = new Map(scenes.map(s => [s.name, s.dur]))
   const touched = m.touched
   chunks = m.list
@@ -1434,14 +1482,20 @@ function apply(raw, mode) {
   const parts = []
   if (mode === 'replace') parts.push(`Ролик заменён, сцен ${scenes.length}`)
   else {
-    if (replaced.length) parts.push((replaced.length > 1 ? 'заменены ' : 'заменена ') + replaced.map(n => `«${n}»`).join(', '))
-    if (added.length) parts.push((added.length > 1 ? 'добавлены ' : 'добавлена ') + added.map(n => `«${n}»`).join(', '))
-    if (!touched.length) parts.push('настройки ролика обновлены')
+    if (replaced.length) parts.push((replaced.length > 1 ? 'заменены ' : 'заменена ') + quoted(replaced))
+    if (added.length) parts.push((added.length > 1 ? 'добавлены ' : 'добавлена ') + quoted(added))
+    const sh = m.shared || []
+    if (sh.length) parts.push((sh.length > 1 ? 'заменены общие куски ' : 'заменён общий кусок ') + quoted(sh))
+    else if (!calls) parts.push(`${quoted(shared)} в${NB}ролике уже ${shared.length > 1 ? 'такие' : 'такой'} же`)
+    else if (!touched.length) parts.push('настройки ролика обновлены')
   }
   if (settledNow) parts.push(settledNote().toLowerCase())
   say(parts.join(', ').replace(/^./, c => c.toUpperCase()))
+  // Общий кусок без сцены действует на весь ролик: остаёмся на том же кадре
   const first = scenes.find(s => s.name === touched[0])
-  T = first ? first.start : 0
+  if (first) T = first.start
+  else if (calls) T = 0
+  else T = Math.min(T, total)
   render()
   play()
   return true

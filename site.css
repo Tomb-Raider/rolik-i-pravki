@@ -11,6 +11,8 @@
   --display: "SB Sans Display Extended", "SB Sans Text", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 * { box-sizing: border-box; }
+/* Атрибут hidden скрывает всегда, даже у кнопок и блоков со своим display */
+[hidden] { display: none !important; }
 html { background: var(--ui-bg); color: var(--ui-fg); }
 body {
   margin: 0; background: var(--ui-bg); color: var(--ui-fg);
