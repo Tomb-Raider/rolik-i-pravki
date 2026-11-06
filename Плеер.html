@@ -156,6 +156,10 @@ body.p-recording .p-view { cursor: none; }
 .p-marks { position: absolute; left: 0; right: 0; top: 26px; height: 7px; pointer-events: none; }
 .p-mark { position: absolute; top: 0; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--ui-sel); pointer-events: auto; cursor: pointer; }
 .p-mark.p-mark-note { background: #E0C400; }
+.p-mark.p-mark-del { background: #E5484D; }
+/* Убранный объект: в режиме правок бледный с красным пунктиром, без режима и при записи его нет совсем */
+.p-view.p-editing .p-stage [data-p-del] { opacity: .28 !important; }
+.p-view:not(.p-editing) .p-stage [data-p-del] { display: none !important; }
 .p-editbar { grid-area: keys; display: flex; align-items: center; flex-wrap: wrap; gap: 2px; padding: 0 10px 10px; }
 .p-editbar .p-eye { display: inline-flex; align-items: center; justify-content: center; }
 .p-editbar .p-hints { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-left: 14px; color: var(--ui-mute); font-size: 12px; }
@@ -363,7 +367,7 @@ scene({
     <button class="p-btn" data-act="clear" title="Убрать все правки из плеера">Убрать правки</button>
     <span class="p-sep"></span>
     <button class="p-btn p-eye" data-act="editoff" title="Скрыть режим правок: рамки и подсказки пропадут, правки останутся в кадре. Кнопка «Правки» сверху вернёт режим" aria-label="Скрыть режим правок"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg></button>
-    <span class="p-hints"><span>Тяните объект</span><span>Двойной щелчок на слой глубже и в текст</span><span>Esc на слой выше</span><span>Alt + щелчок замечание</span><span>Стрелки двигают выбранное</span><span>Delete убирает правку</span></span>
+    <span class="p-hints"><span>Тяните объект</span><span>Двойной щелчок на слой глубже и в текст</span><span>Esc на слой выше</span><span>Alt + щелчок замечание</span><span>Стрелки двигают выбранное</span><span>Delete убирает объект, ещё раз возвращает</span></span>
   </div>
 </div>
 
@@ -1821,6 +1825,7 @@ const MODE_TEXT = {
   only: 'только в этот момент, начало и конец движения как были',
 }
 const SENT = '⁣'            // метка: по ней видно, ставит ли draw() текст сам
+const CMD = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? 'Cmd' : 'Ctrl'
 let editOn = false, gridOn = false, sampling = false, defMode = 'all'
 let recs = loadRecs()            // ключ «сцена › путь» → правка
 let edSel = null, selInfo = null, edHov = null, edDrag = null, edSize = null, textEdit = null, noteFor = null, guides = []
@@ -1842,7 +1847,7 @@ function saveRecs() {
 const hasMove = r => !!(r.dx || r.dy)
 const hasSize = r => r.w != null && r.w0 != null && !!r.sz && Math.abs(r.w - r.w0) >= 1
 const hasText = r => r.after != null && r.after !== r.before
-const live = r => hasMove(r) || hasSize(r) || hasText(r) || !!(r.note && r.note.trim())
+const live = r => hasMove(r) || hasSize(r) || hasText(r) || !!r.del || !!(r.note && r.note.trim())
 const liveRecs = () => Object.values(recs).filter(live)
 const recsOf = s => Object.values(recs).filter(r => r.scene === s.name)
 const clean = s => String(s).replace(/[ \t\r\n]+/g, ' ').replace(/^ | $/g, '')   // неразрывный пробел не трогаем
@@ -1883,6 +1888,37 @@ function ensureRec(s, el) {
   if (!recs[key]) recs[key] = { key, scene: s.name, path: pathIn(s.el, el), label: labelOf(el), t: sceneT(), dx: 0, dy: 0, k: 1, mode: defMode, before: null, after: null, note: '', snap: [] }
   elCache.set(key, el)
   return recs[key]
+}
+// Сменить адрес правок, например после того, как ИИ удалил соседа. Сначала все снимаем, потом ставим,
+// чтобы правка не заняла место соседа, который сам ещё не переехал
+function rekey(s, moves) {
+  for (const [r] of moves) delete recs[r.key]
+  for (const [r, path, el] of moves) {
+    r.path = path
+    r.key = s.name + ' › ' + path
+    if (!recs[r.key]) recs[r.key] = r
+    if (el) elCache.set(r.key, el)
+  }
+}
+
+// Отпечаток объекта: тег, классы, текст и что внутри. Одинаковые по отпечатку объекты это двойники,
+// убранный объект плеер ищет среди них по порядку, а не по адресу, который съезжает после правок кода
+const sigOf = el => [el.tagName.toLowerCase(), [...el.classList].filter(c => !/^p-/.test(c)).sort().join('.'), clean(el.textContent),
+  [...el.querySelectorAll('*')].map(k => k.tagName.toLowerCase()).join(','), el.getAttribute('src') || el.getAttribute('href') || ''].join('|')
+const twins = (s, sig) => { const tag = sig.slice(0, sig.indexOf('|')); return [...s.el.querySelectorAll('*')].filter(k => k.tagName.toLowerCase() === tag && sigOf(k) === sig) }
+// Каким объект был в коде в этот момент, без правок поверх: так же его потом увидит сборка сцен
+function printOf(s, el) {
+  const t = sceneT()
+  let fp = null
+  sampleScene(s, [t], () => {
+    for (const k of [...styled]) if (k._origHTML != null && s.el.contains(k) && (k === el || !k.contains(el))) { k.innerHTML = k._origHTML; delete k._origHTML }
+  }, () => {
+    if (!el.isConnected) return
+    const sig = sigOf(el), g = twins(s, sig), p = el.parentElement
+    fp = { sig, n: g.length, rank: Math.max(0, g.indexOf(el)), t, parent: p === s.el ? '' : pathIn(s.el, p), idx: [...p.children].indexOf(el) + 1 }
+  })
+  render()
+  return fp
 }
 
 // Во весь кадр по раскладке, даже если draw его уменьшил или сдвинул. У SVG раскладки нет, там по рамке на экране
@@ -2068,6 +2104,7 @@ function applyEdits(s, t) {
       styled.add(el)
       if (!(textEdit && textEdit.el === el)) showText(el, r)
     } else if (el._origHTML != null && !(textEdit && textEdit.el === el)) { el.innerHTML = el._origHTML; delete el._origHTML }
+    if (r.del) { el.dataset.pDel = '1'; styled.add(el) } else if (el.dataset.pDel) delete el.dataset.pDel
   }
   // Правку убрали: возвращаем элемент как было
   for (const el of [...styled]) {
@@ -2077,6 +2114,7 @@ function applyEdits(s, t) {
     clearSize(el)
     if (el._pDisp != null) { el.style.display = el._pDisp; delete el._pDisp }
     if (el._origHTML != null) { el.innerHTML = el._origHTML; delete el._origHTML }
+    if (el.dataset.pDel) delete el.dataset.pDel
     el._pMoved = false
     styled.delete(el)
   }
@@ -2186,6 +2224,7 @@ function settleEdits() {
   try {
     for (const r of Object.values(recs)) r.lost = !scenes.some(s => s.name === r.scene)
     for (const s of scenes) {
+      done += settleDels(s)
       const items = recsOf(s).filter(live).map(r => ({ r, el: elOf(s, r), best: '', at: null }))
       if (!items.length) continue
       const times = steps(s, 24), moments = [...new Set(items.map(it => it.r.t))]
@@ -2206,10 +2245,58 @@ function settleEdits() {
         // Ширина внесена, если такой стала видимая ширина или ширина самого блока
         if (at && hasSize(r) && (Math.abs(at[2] - r.w) < 3 || Math.abs(at[3] - r.w) < 3)) { r.w = r.w0 = null; delete r.sz; done++ }
       }
+      // Номер в адресе правки такой, как у её объекта сейчас: тогда выбранный объект находит свою правку.
+      // Меняется только номер, классы в адресе остаются, даже если draw их переключает
+      const bare = p => p.replace(/:nth-child\(\d+\)/g, '')
+      rekey(s, items.filter(it => it.el && live(it.r)).map(it => [it.r, pathIn(s.el, it.el), it.el])
+        .filter(([r, path]) => path !== r.path && bare(path) === bare(r.path)))
     }
     for (const [key, r] of Object.entries(recs)) if (!live(r)) delete recs[key]
   } catch (e) { sampling = false }
   saveRecs()
+  return done
+}
+// Убранные объекты. ИИ удалил объект, если таких же в сцене в тот же момент стало меньше.
+// Если нет, объект ищется среди двойников по порядку: адрес мог съехать, а двойник рядом не тот
+function settleDels(s) {
+  const dels = recsOf(s).filter(r => r.del && r.fp)
+  if (!dels.length) return 0
+  const found = new Map()
+  sampleScene(s, [...new Set(dels.map(r => r.fp.t))], null, t => {
+    for (const r of dels) if (!found.has(r) && Math.abs(t - r.fp.t) < 1e-9) found.set(r, twins(s, r.fp.sig))
+  })
+  const gone = [], moves = []
+  for (const r of dels) {
+    const g = found.get(r) || []
+    if (g.length < r.fp.n) { gone.push(r); delete recs[r.key]; continue }
+    let el = null
+    try { el = s.el.querySelector(':scope > ' + r.path) } catch (e) { /* адрес не разобрался, найдём по порядку */ }
+    if (g.length === r.fp.n || !g.includes(el)) el = g[Math.min(r.fp.rank, g.length - 1)]
+    const p = el.parentElement
+    moves.push([r, pathIn(s.el, el), el])
+    Object.assign(r.fp, { rank: g.indexOf(el), n: g.length, parent: p === s.el ? '' : pathIn(s.el, p), idx: [...p.children].indexOf(el) + 1 })
+  }
+  rekey(s, moves.filter(([r, path]) => path !== r.path))
+  for (const [r, , el] of moves) elCache.set(r.key, el)
+  return gone.length + (gone.length ? shiftPaths(s, gone) : 0)
+}
+// После удаления объекта соседи за ним стоят в родителе на номер раньше, а правки того, что было внутри, ушли вместе с ним
+function shiftPaths(s, gone) {
+  let done = 0
+  const moves = []
+  for (const r of recsOf(s)) {
+    if (gone.some(g => r.path.startsWith(g.path + ' > '))) { delete recs[r.key]; done++; continue }
+    const segs = r.path.split(' > ')
+    const path = segs.map((seg, i) => {
+      const m = seg.match(/^(.*):nth-child\((\d+)\)$/)
+      if (!m) return seg
+      const parent = segs.slice(0, i).join(' > '), j = +m[2]
+      const k = gone.filter(g => g.fp.parent === parent && g.fp.idx < j).length
+      return k ? `${m[1]}:nth-child(${j - k})` : seg
+    }).join(' > ')
+    if (path !== r.path) moves.push([r, path])
+  }
+  rekey(s, moves)
   return done
 }
 // Сцены пересобраны: старые элементы больше не на экране
@@ -2256,6 +2343,7 @@ function snapAxis(pts, lines, nbrs, x, thr) {
 function paintEdit() {
   const on = editOn && !inRec && scenes.length > 0
   ov.hidden = !on
+  view.classList.toggle('p-editing', on)
   if (!on) return
   const s = scenes[cur]
   if (edSel && (!edSel.isConnected || !s || !s.el.contains(edSel))) { edSel = null; selInfo = null; paintModes() }
@@ -2278,6 +2366,7 @@ function paintEdit() {
     const now = `${Math.round(r.width / k)} × ${Math.round(r.height / k)}`
     if (rec && hasSize(rec)) a.push(rec.sz.prop ? `${Math.round(rec.w0)} × ${Math.round(rec.h0)} → ${now}` : `ширина ${Math.round(rec.w0)} → ${Math.round(r.width / k)}`)
     else a.push(now)
+    if (rec && rec.del) a.unshift('убран')
     dimBox.textContent = a.join('   ')
     dimBox.style.display = 'block'
     dimBox.style.left = Math.max(4, r.left - vr.left) + 'px'
@@ -2294,6 +2383,14 @@ function paintEdit() {
     h += ln(W / 2, 0, W / 2, H, 'rgba(255,255,255,.16)') + ln(0, H / 2, W, H / 2, 'rgba(255,255,255,.16)')
   }
   for (const g of guides) h += g.x != null ? ln(g.x, 0, g.x, H, '#FF3D8B') : ln(0, g.y, W, g.y, '#FF3D8B')
+  // Убранные объекты сцены обведены красным пунктиром
+  if (s) for (const r of recsOf(s)) {
+    const el = r.del && elOf(s, r)
+    if (!el) continue
+    const q = vrect(el), k = stageK()
+    if (q.width < 1 && q.height < 1) continue
+    h += `<rect x="${(q.left - sr.left) / k - 3}" y="${(q.top - sr.top) / k - 3}" width="${q.width / k + 6}" height="${q.height / k + 6}" fill="none" stroke="#E5484D" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>`
+  }
   if (selInfo && selInfo.moving && selInfo.el === edSel && !textEdit) {
     const poly = (pts, c, dash) => `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="${c}" stroke-width="1.5" vector-effect="non-scaling-stroke"${dash ? ' stroke-dasharray="6 5"' : ''}/>`
     h += poly(selInfo.pts.map(p => [p[1], p[2]]), 'rgba(255,255,255,.4)', true)
@@ -2585,18 +2682,32 @@ document.addEventListener('keydown', e => {
     return
   }
   if (e.key === 'Delete' || e.key === 'Backspace') {
-    const key = keyOf(scenes[cur], edSel)
-    if (!recs[key]) return
     e.preventDefault()
     e.stopPropagation()
-    pushHist()
-    delete recs[key]
-    saveRecs()
-    selInfo = null
-    render()
-    say('Правка убрана')
+    toggleDel(scenes[cur], edSel)
   }
 }, true)
+
+// Delete убирает выбранный объект из сцены, как на сайтах убирает блок. Ещё раз Delete или Cmd + Z возвращает
+function toggleDel(s, el) {
+  const key = keyOf(s, el), old = recs[key], was = !!(old && old.del)
+  const fp = was ? null : printOf(s, el)
+  if (!was && !fp) return
+  pushHist()
+  if (was) {
+    delete old.del
+    delete old.fp
+    if (!live(old)) delete recs[key]
+  } else {
+    const r = ensureRec(s, el)
+    if (!live(r)) r.t = fp.t
+    r.del = true
+    r.fp = fp
+  }
+  saveRecs()
+  render()
+  say(was ? 'Объект вернулся' : `Объект убран. Delete ещё раз или${NB}${CMD}${NB}+${NB}Z вернёт его`)
+}
 
 function pushHist() {
   edHist.back.push(JSON.stringify(recs))
@@ -2682,8 +2793,8 @@ function buildMarks() {
     const s = scenes.find(x => x.name === r.scene)
     if (!s) return ''
     const at = s.start + Math.min(s.len, r.t * s.len / s.dur)
-    const noteOnly = !hasMove(r) && !hasSize(r) && !hasText(r)
-    return `<i class="p-mark${noteOnly ? ' p-mark-note' : ''}" style="left:${at / vt * 100}%" data-key="${esc(r.key)}" title="${esc(`${r.scene}, t = ${fmt(r.t)}, ${r.label}`)}"></i>`
+    const noteOnly = !hasMove(r) && !hasSize(r) && !hasText(r) && !r.del
+    return `<i class="p-mark${r.del ? ' p-mark-del' : noteOnly ? ' p-mark-note' : ''}" style="left:${at / vt * 100}%" data-key="${esc(r.key)}" title="${esc(`${r.scene}, t = ${fmt(r.t)}, ${r.label}`)}"></i>`
   }).join('')
 }
 function goToEdit(key) {
@@ -2717,6 +2828,12 @@ function editsText() {
       out.push('', `═══ «${r.scene}»${s ? ` · ${short(s.start)}-${short(s.start + s.len)} с ролика` : ' · такой сцены сейчас нет'}`)
     }
     out.push('', `[${++n}] t = ${fmt(r.t)} · ${r.label} · ${r.path}${r.lost ? ' · в кадре не нашёлся' : ''}`)
+    if (r.del) {
+      // Объект уходит целиком, остальные его правки уже не нужны
+      out.push('  удалить: объект целиком, из всей сцены' + (r.fp && r.fp.n > 1 ? ` · таких же в сцене ${r.fp.n}, этот ${r.fp.rank + 1}-й по порядку в коде` : ''))
+      if (r.note && r.note.trim()) out.push('! ' + r.note.trim().replace(/\n+/g, '\n! '))
+      continue
+    }
     if (hasText(r)) {
       out.push('- ' + forOut(r.before), '+ ' + forOut(r.after))
       if (r.owned) out.push('  этот текст ставит draw, поменяй строку в коде сцены')

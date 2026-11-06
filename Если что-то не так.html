@@ -158,6 +158,8 @@ pre.prompt {
 <style>
 /* Шапка общего сайта и табы материалов, как в site.css. Вставлено скриптом «материалы для общего сайта.py» */
 :root { --display: "SB Sans Display Extended", "SB Sans Text", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+/* Ширину страницы считаем как на остальном сайте (site.css): вместе с полями, иначе страница на 48 px шире */
+.page, .s-top, .s-top *, .mt, .mt a { box-sizing: border-box; }
 .s-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-bottom: 40px; }
 .s-name { display: inline-flex; align-items: center; gap: 10px; color: var(--ui-fg); font-weight: 600; text-decoration: none; }
 .s-name img { display: block; width: auto; height: 22px; }
