@@ -22,7 +22,7 @@ body {
 button { font: inherit; }
 
 .site { max-width: 1120px; margin: 0 auto; padding: 28px 24px 120px; }
-.s-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 72px; }
+.s-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-bottom: 72px; }
 .s-name { display: inline-flex; align-items: center; gap: 10px; color: var(--ui-fg); font-weight: 600; text-decoration: none; }
 .s-name img { display: block; width: auto; height: 22px; }
 
@@ -37,7 +37,8 @@ button { font: inherit; }
 #drop { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center;
   background: rgba(18, 19, 22, .86); font: 600 28px/1.2 var(--display); pointer-events: none; }
 #drop.on { display: flex; }
-/* Вкладки сегментами: «Что это», «Презентация или сайт», «Видео» */
+/* Вкладки сегментами: «Обзор», «Презентация или сайт», «Видео», «Материалы». На страницах материалов те же правила
+   вставляет скрипт «Сборка страниц пакета/материалы для общего сайта.py» */
 .seg { display: inline-flex; gap: 2px; padding: 4px; border-radius: 10px; background: #1A1B1E; font-size: 15px; }
 .seg a { padding: 7px 16px; border-radius: 7px; color: #B4B5BA; text-decoration: none; text-align: center; line-height: 1.3; }
 .seg a:hover { color: var(--ui-fg); }
@@ -140,11 +141,61 @@ h2.far { margin-top: 168px; }
 .fmt button { appearance: none; border: 0; border-radius: 6px; background: none; color: var(--ui-mute); padding: 7px 12px; cursor: pointer; }
 .fmt button.on { background: var(--ui-line); color: var(--ui-fg); }
 .bm { display: inline-block; padding: 7px 14px; border-radius: 6px; background: var(--ui-line); color: var(--ui-fg); text-decoration: none; font-size: 15px; cursor: grab; }
+/* Закладка «Режим правок»: слева настоящая кнопка в пунктирной рамке, справа схема браузера, где копия кнопки
+   сама едет на панель закладок (site.js). Пока кнопку тащат, вверху окна подсказка #toTop */
+.bmk { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 16px; }
+.bmk-grab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; min-height: 300px; padding: 24px 20px;
+  border: 1.5px dashed #5A5B61; border-radius: 12px; text-align: center; }
+.bmk-grab:hover { border-color: var(--ui-mute); }
+.bmk-grab .bm { display: inline-flex; align-items: center; gap: 10px; padding: 11px 18px 11px 14px; border-radius: 8px; background: var(--ui-line2); font-size: 16px; }
+.bmk-grab .bm:active { cursor: grabbing; }
+.bmk-grab .grip { width: 8px; height: 14px; fill: var(--ui-mute); }
+.bmk-grab p { margin: 0; max-width: 220px; color: var(--ui-mute); font-size: 15px; line-height: 1.45; }
+.bmk-demo { position: relative; display: flex; padding: 14px; border-radius: 12px; background: var(--tile); container-type: inline-size; }
+.br { flex: 1; display: flex; flex-direction: column; border: 1px solid var(--ui-line2); border-radius: 10px; overflow: hidden; }
+.br-top { display: flex; align-items: center; gap: 6px; padding: 9px 12px; }
+.br-top i { width: 9px; height: 9px; border-radius: 50%; background: var(--ui-line2); }
+.br-url { flex: 1; height: 18px; margin-left: 10px; border-radius: 9px; background: #1A1B1E; }
+.br-bar { display: flex; align-items: center; gap: 8px; padding: 7px 12px 9px; border-top: 1px solid var(--ui-line); border-bottom: 1px solid var(--ui-line); }
+.br-fake { flex-shrink: 1; width: 46px; min-width: 14px; height: 10px; border-radius: 5px; background: #1F2024; }
+.br-slot { flex-shrink: 0; padding: 3px 10px; border: 1px dashed var(--ui-mute); border-radius: 6px; color: var(--ui-mute); font-size: 13px; line-height: 1.3; white-space: nowrap; }
+.br-cap { flex-shrink: 0; margin-left: auto; color: var(--ui-mute); font-size: 13px; white-space: nowrap; }
+.br-page { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; padding: 18px 16px 22px; }
+.br-line { align-self: stretch; height: 8px; border-radius: 4px; background: #1A1B1E; }
+.br-line.short { align-self: flex-start; width: 60%; }
+.br-btn { margin-top: auto; padding: 6px 12px; border-radius: 6px; background: var(--ui-line2); color: var(--ui-fg); font-size: 14px; line-height: 1.4; white-space: nowrap; }
+.br-ghost { position: absolute; left: 0; top: 0; z-index: 2; opacity: 0; pointer-events: none; }
+.br-ghost svg { position: absolute; right: -10px; bottom: -14px; width: 18px; height: 18px; }
+.br-ghost svg path { fill: var(--ui-fg); stroke: #000; stroke-width: 1; }
+.bmk-arrow { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.bmk-arrow path { fill: none; stroke: var(--ui-mute); stroke-width: 1.5; }
+.bmk-arrow .line { stroke-dasharray: 5 5; }
+@container (max-width: 380px) { .br-fake + .br-fake { display: none; } }
+@container (max-width: 300px) { .br-cap { display: none; } }
+#toTop { position: fixed; left: 0; right: 0; top: 0; z-index: 30; display: flex; align-items: center; justify-content: center; gap: 14px;
+  padding: 18px 16px 22px; background: rgba(0, 0, 0, .9); color: var(--ui-fg); font: 600 22px/1.3 var(--display); text-align: center;
+  pointer-events: none; transform: translateY(-110%); transition: transform .2s; }
+#toTop.on { transform: none; }
+#toTop svg { flex-shrink: 0; width: 26px; height: 34px; animation: toTop 1s ease-in-out infinite; }
+#toTop path { fill: none; stroke: var(--ui-fg); stroke-width: 2; }
+@keyframes toTop { 50% { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { #toTop svg { animation: none; } }
+/* Подсказка про авторский надзор: кусок сайта с замечанием режима правок, рядом текст */
+.tip-ex { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 40px; align-items: center; margin-top: 72px; }
+.tip-ex h3 { margin: 0 0 8px; font: 600 22px/1.3 var(--display); }
+.tip-ex p { margin: 0; color: var(--ui-mute); }
+.tip-site { position: relative; padding: 22px 22px 26px; border-radius: 12px; background: var(--tile); }
+.tip-site i { display: block; height: 10px; margin: 0 0 10px; border-radius: 5px; background: #1F2024; }
+.tip-site i.h { width: 55%; height: 16px; margin-bottom: 16px; background: #2A2B30; }
+.tip-site i.s { width: 70%; }
+.tip-btn { display: inline-block; margin-top: 8px; padding: 7px 14px; border-radius: 6px; background: #2A2B30; color: var(--ui-mute); font-size: 13px; outline: 1.5px solid #1F9EEB; outline-offset: 3px; }
+.tip-note { position: absolute; right: 18px; bottom: 18px; max-width: 190px; padding: 7px 11px; border-radius: 8px; background: #1F9EEB; color: #fff; font-size: 13px; line-height: 1.35; }
 pre.phrase { max-width: 760px; margin: 10px 0 10px; padding: 16px 18px; border-radius: 8px; background: var(--ui-line); font: 14px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .agent { max-width: 760px; margin-top: 28px; }
 .foot { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 96px; font-size: 14px; color: var(--ui-mute); }
 .foot a { color: var(--ui-mute); text-decoration: none; }
 .foot a:hover { color: var(--ui-fg); }
+.foot .who { flex-basis: 100%; }
 
 /* Живые примеры. Режим правок: блок едет и прилипает к краю заголовка. Ролик: пресет Apple, его рисует site.js */
 .ex { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 4px; background: #0B0D10; container-type: inline-size; }
@@ -252,12 +303,17 @@ pre.phrase { max-width: 760px; margin: 10px 0 10px; padding: 16px 18px; border-r
   .pair .row { justify-content: flex-start; }
   .links { grid-template-columns: 1fr; gap: 24px; }
   .seg { display: flex; width: 100%; font-size: 14px; }
-  .seg a { flex: 1; padding: 7px 8px; }
+  .seg a { flex: 1; display: flex; align-items: center; justify-content: center; padding: 7px 4px; }
   h2.far { margin-top: 112px; }
   .tabs a { font-size: 15px; padding: 12px 2px 14px; }
   .split { grid-template-columns: 1fr; }
   .split .side { position: static; }
   .drop { min-height: 220px; }
+  .bmk { grid-template-columns: 1fr; }
+  .tip-ex { grid-template-columns: 1fr; margin-top: 56px; }
+  .tip-note { position: static; display: block; margin-top: 14px; max-width: none; }
+  .bmk-grab { min-height: 180px; }
+  .bmk-demo { min-height: 280px; }
 }
 @media (min-width: 641px) and (max-width: 900px) {
   .links { grid-template-columns: 1fr 1fr; }

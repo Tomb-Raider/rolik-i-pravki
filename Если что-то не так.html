@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Если что-то не так · Ролик и правки в HTML</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- Яндекс Метрика: посещения, цели на главных кнопках, Вебвизор без полей ввода и имён файлов (их блоки с классом ym-hide-content).
+     Внизу страницы строка о статистике, её требуют условия Метрики. В режим правок и плеер счётчик не ставить -->
+<script>
+(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym');
+ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true});
+(function(){
+  var ID=114097970, GOALS=[
+    ['[data-open]','open_files'],
+    ['[data-copy-brief],[data-download],[data-copy="instr"]','copy_for_chat'],
+    ['[data-copy]','agent_phrase'],
+    ['[data-play],[data-pick]','reel_open'],
+    ['a[href*="/archive/"]','download_package']];
+  document.addEventListener('click',function(e){
+    var t=e.target; if(!t||!t.closest) return;
+    for(var i=0;i<GOALS.length;i++) if(t.closest(GOALS[i][0])){ ym(ID,'reachGoal',GOALS[i][1]); return }
+  },true);
+  document.addEventListener('dragstart',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('a.bm,[data-bm]')) ym(ID,'reachGoal','bookmark');
+  },true);
+  document.addEventListener('DOMContentLoaded',function(){
+    var foot=document.querySelector('.foot'), box=foot||document.querySelector('.page,.site')||document.body;
+    var p=document.createElement(foot?'span':'p');
+    p.className='ym-note';
+    p.innerHTML='Сайт собирает статистику посещений через <a href="https://yandex.ru/legal/confidential/" style="color:inherit">Яндекс&nbsp;Метрику</a>. Ваши файлы и&nbsp;тексты, которые вы вставляете, в&nbsp;неё не&nbsp;попадают';
+    p.style.cssText=foot?'flex-basis:100%':'margin:96px 0 0;font-size:14px;color:var(--ui-mute)';
+    box.appendChild(p);
+  });
+})();
+</script>
+<style>
+/* Страницы пакета «Ролик из HTML». Фон чёрный, шрифты SB Sans: текст SB Sans Text, заголовки SB Sans Display Extended.
+   Файлов шрифтов на сайте нет, берутся установленные на компьютере. Где их нет, показывается системный шрифт */
+@font-face { font-family: "SB Sans Text"; font-weight: 400; src: local("SBSansText-Regular"), local("SB Sans Text Regular"); }
+@font-face { font-family: "SB Sans Text"; font-weight: 500; src: local("SBSansText-Medium"), local("SB Sans Text Medium"); }
+@font-face { font-family: "SB Sans Text"; font-weight: 600; src: local("SBSansText-Semibold"), local("SB Sans Text Semibold"); }
+@font-face { font-family: "SB Sans Display Extended"; font-weight: 600; src: local("SBSansDisplay-ExtendedSemibold"), local("SB Sans Display Extended Semibold"); }
+:root {
+  --ui-bg: #000000; --ui-fg: #ECECEE; --ui-mute: #86878D; --ui-line: #232428; --ui-line2: #393A40;
+  --ui-ok: #7FD49B; --ui-bad: #FFB4AA;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+html { background: var(--ui-bg); color: var(--ui-fg); }
+body {
+  margin: 0; background: var(--ui-bg); color: var(--ui-fg);
+  font: 16px/1.55 "SB Sans Text", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.page { max-width: 1120px; margin: 0 auto; padding: 28px 24px 120px; }
+/* Общая шапка двух пакетов: «Ролик из HTML» и «Режим правок» всегда на одном месте */
+.top { display: flex; gap: 24px; margin-bottom: 10px; font-size: 15px; }
+.top a { color: var(--ui-mute); text-decoration: none; }
+.top a:hover { color: var(--ui-fg); }
+.top a.on { color: var(--ui-fg); font-weight: 600; }
+.nav { display: flex; flex-wrap: wrap; gap: 4px 22px; margin-bottom: 72px; font-size: 14px; }
+.nav a { color: var(--ui-mute); text-decoration: none; }
+.nav a:hover, .nav a.on { color: var(--ui-fg); }
+h1, h2 { font-family: "SB Sans Display Extended", "SB Sans Text", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-weight: 600; }
+h1 { margin: 0 0 18px; font-size: 46px; line-height: 1.1; letter-spacing: 0; }
+h2 { margin: 96px 0 14px; font-size: 28px; line-height: 1.2; letter-spacing: 0; }
+h3 { margin: 0 0 6px; font-size: 19px; line-height: 1.3; font-weight: 600; }
+p, li { max-width: 740px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px; padding-left: 22px; }
+li { margin: 0 0 6px; }
+a { color: var(--ui-fg); text-underline-offset: 3px; text-decoration-color: var(--ui-line2); }
+.lead { max-width: 760px; margin: 0 0 20px; font-size: 20px; line-height: 1.5; color: var(--ui-mute); }
+.mute { color: var(--ui-mute); }
+.sub { margin: -4px 0 36px; color: var(--ui-mute); }
+code { font: 0.9em/1 var(--mono); padding: 2px 5px; border-radius: 4px; background: var(--ui-line); }
+pre.prompt {
+  max-width: 740px; margin: 0 0 12px; padding: 16px 18px; border-radius: 8px; background: var(--ui-line);
+  font: 14px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+.btn {
+  appearance: none; border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer;
+  background: var(--ui-fg); color: var(--ui-bg); font: inherit; font-size: 14px;
+}
+.btn:hover { opacity: .9; }
+.btn.ghost { background: none; color: var(--ui-mute); padding: 7px 8px; }
+.btn.ghost:hover, .btn.ghost.on { color: var(--ui-fg); opacity: 1; }
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 0 8px; font-size: 14px; color: var(--ui-mute); }
+
+/* Живые примеры */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); gap: 56px 36px; }
+.grid.wide { grid-template-columns: 1fr; }
+.ex-frame { position: relative; overflow: hidden; border-radius: 4px; background: #0B0D10; cursor: pointer; margin: 0 0 16px; }
+.ex-frame.ex-paused::after {
+  content: "Пауза"; position: absolute; right: 10px; top: 8px; font-size: 12px; color: var(--ui-mute);
+}
+.ex-stage {
+  position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden;
+  --bg: #0B0D10; --fg: #FFFFFF; --accent: #3D7CFF;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg); color: var(--fg); font: 400 16px/1.2 var(--font);
+}
+.ex-slot { position: absolute; inset: 0; display: none; }
+.ex-slot.on { display: block; }
+.ex-slot > .ex-scene { position: absolute; inset: 0; }
+.ex-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: rgba(255, 255, 255, .28); }
+.ex-err {
+  position: absolute; inset: auto 8px 8px; display: none; margin: 0; padding: 8px 10px; border-radius: 6px;
+  background: rgba(20, 0, 0, .85); color: var(--ui-bad); font: 12px/1.4 var(--mono); white-space: pre-wrap;
+}
+.ex-err.on { display: block; }
+.ex p { margin: 0 0 8px; }
+.ex .ex-prompt { display: none; }
+.ex .btn { margin-top: 6px; }
+.src { font-size: 14px; color: var(--ui-mute); }
+.src a { color: var(--ui-mute); }
+.src a:hover { color: var(--ui-fg); }
+.sources li { color: var(--ui-mute); }
+/* Подвал: контакты автора, под ними строка о статистике Метрики */
+.foot { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 96px; font-size: 14px; color: var(--ui-mute); }
+.foot a { color: var(--ui-mute); }
+.foot a:hover { color: var(--ui-fg); }
+
+@media (max-width: 640px) {
+  .page { padding: 20px 16px 96px; }
+  .nav { margin-bottom: 48px; }
+  h1 { font-size: 36px; }
+  h2 { font-size: 26px; margin-top: 72px; }
+  .lead { font-size: 18px; }
+}
+
+</style>
+<style>
+/* Своё для этой страницы */
+.pairs { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.5fr); gap: 18px 40px; max-width: 980px; margin: 28px 0 0; }
+.pairs .head { font-size: 14px; color: var(--ui-mute); }
+.pairs .vague { color: var(--ui-mute); }
+.pairs p { margin: 0; }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 28px; margin: 36px 0 10px; }
+.duo .ex h3 { font-size: 16px; }
+.duo .ex.after h3 { color: var(--ui-ok); }
+.say { max-width: 740px; margin: 0 0 8px; }
+.item { max-width: 740px; margin: 0 0 44px; }
+.item .why { margin: 0 0 12px; color: var(--ui-mute); }
+.item pre.prompt { margin: 0 0 4px; }
+.item .btn { margin: 0; }
+.group { margin: 72px 0 24px; font-size: 22px; }
+.group.first { margin-top: 44px; }
+@media (max-width: 640px) {
+  .pairs { grid-template-columns: 1fr; gap: 4px; }
+  .pairs .head { display: none; }
+  .pairs .vague { margin-top: 22px; }
+  .duo { grid-template-columns: 1fr; }
+}
+</style>
+<style>
+/* Шапка общего сайта и табы материалов, как в site.css. Вставлено скриптом «материалы для общего сайта.py» */
+:root { --display: "SB Sans Display Extended", "SB Sans Text", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+.s-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-bottom: 40px; }
+.s-name { display: inline-flex; align-items: center; gap: 10px; color: var(--ui-fg); font-weight: 600; text-decoration: none; }
+.s-name img { display: block; width: auto; height: 22px; }
+.seg { display: inline-flex; gap: 2px; padding: 4px; border-radius: 10px; background: #1A1B1E; font-size: 15px; }
+.seg a { padding: 7px 16px; border-radius: 7px; color: #B4B5BA; text-decoration: none; text-align: center; line-height: 1.3; }
+.seg a:hover { color: var(--ui-fg); }
+.seg a.on { background: var(--ui-fg); color: var(--ui-bg); font-weight: 600; }
+.mt { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin: 0 0 64px; box-shadow: inset 0 -1px 0 var(--ui-line); }
+.mt a { padding: 14px 4px 16px; color: var(--ui-mute); font: 600 20px/1.3 var(--display); text-align: center; text-decoration: none; }
+.mt a:hover { color: var(--ui-fg); }
+.mt a.on { color: var(--ui-fg); box-shadow: inset 0 -2px 0 var(--ui-fg); }
+@media (max-width: 640px) {
+  .s-top { margin-bottom: 28px; }
+  .seg { display: flex; width: 100%; font-size: 14px; }
+  .seg a { flex: 1; display: flex; align-items: center; justify-content: center; padding: 7px 4px; }
+  .mt { margin-bottom: 44px; }
+  .mt a { font-size: 15px; padding: 12px 2px 14px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="s-top">
+  <a class="s-name" href="index.html"><img src="logo-white.svg" alt="">Ролик и&nbsp;правки в&nbsp;HTML</a>
+  <nav class="seg"><a href="index.html">Обзор</a><a href="Презентация.html">Презентация или&nbsp;сайт</a><a href="Видео.html">Видео</a><a class="on" href="%D0%9F%D1%80%D0%B8%D1%91%D0%BC%D1%8B%20%D0%B4%D0%B2%D0%B8%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F.html">Материалы</a></nav>
+</header>
+<nav class="mt"><a href="%D0%9F%D1%80%D0%B8%D1%91%D0%BC%D1%8B%20%D0%B4%D0%B2%D0%B8%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F.html">Приёмы движения</a><a href="%D0%9A%D0%B0%D0%BA%20%D1%80%D0%B0%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D1%82%D1%8C%20%D1%80%D0%B5%D1%84%D0%B5%D1%80%D0%B5%D0%BD%D1%81.html">Как разобрать референс</a><a class="on" href="%D0%95%D1%81%D0%BB%D0%B8%20%D1%87%D1%82%D0%BE-%D1%82%D0%BE%20%D0%BD%D0%B5%20%D1%82%D0%B0%D0%BA.html">Если что-то не так</a></nav>
+
+<h1>Если что-то не так</h1>
+<p class="lead">ИИ поправит точно, если назвать сцену и секунду, сказать, что видно и что должно быть. Кнопка «Для ИИ» в плеере подставит сцену и секунду сама, останется дописать остальное</p>
+
+<h2>Размытое замечание и точное</h2>
+<p class="sub">На размытое ИИ отвечает наугад и часто делает хуже</p>
+<div class="pairs">
+  <p class="head">ИИ гадает</p><p class="head">ИИ понимает</p>
+  <p class="vague">«Дёргано»</p>
+  <p>Сцена «Фразы», с 2,0 по 2,5 с строка едет рывками. Пусть едет ровно, без ускорения</p>
+  <p class="vague">«Выглядит как анимированная презентация»</p>
+  <p>Убери проявления и выезды снизу. Строки меняются жёсткой склейкой, без фейда и блюра</p>
+  <p class="vague">«Сделай поживее»</p>
+  <p>Сцены по 1,5 с вместо 2, каждая склейка на долю бита</p>
+  <p class="vague">«Не цепляет»</p>
+  <p>Сейчас все сцены одинаково сильные. Пусть пик будет один, в сцене «Финал». Там самое крупное слово и единственный удар, сцены до него спокойнее и короче</p>
+  <p class="vague">«Слишком быстро»</p>
+  <p>Сцена «Фразы», строка сменяется раньше, чем успеваешь прочитать. Пусть каждая строка держится 1,5 с вместо 1,2, остальное не меняй</p>
+  <p class="vague">«Что-то с текстом»</p>
+  <p>Сцена «Титул», на 0,4 с заголовок мелкий для кадра. Сделай его 154 px, начертание 700, положение не меняй</p>
+</div>
+
+<h2>Было и стало</h2>
+<p class="sub">Щелчок по кадру ставит на паузу</p>
+<div class="tools">Скорость
+  <button class="btn ghost on" data-speed="1">1×</button>
+  <button class="btn ghost" data-speed="0.5">0,5×</button>
+  <button class="btn ghost" data-speed="0.25">0,25×</button>
+</div>
+
+<div class="duo">
+  <div class="ex">
+    <h3>Было</h3>
+    <script type="text/plain">
+// Было. Строки проявляются, выезжают снизу и растворяются. Так получается «анимированная презентация»
+const lines = ['Текст настоящий.', 'Цвет из бренда.', 'Правка за минуту.']
+
+scene({
+  name: 'Фейд',
+  dur: 3.6,
+  html: lines.map(l => `<div class="line">${l}</div>`).join(''),
+  css: `
+    .line { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 140px; letter-spacing: -0.015em; white-space: nowrap; }
+  `,
+  draw({ t, $$ }) {
+    $$('.line').forEach((line, i) => {
+      const lt = t - i * 1.2                                        // время внутри строки
+      line.style.opacity = R.prog(lt, 0, 0.4) * (1 - R.prog(lt, 0.8, 0.4))   // проявление и растворение по 400 мс
+      line.style.transform = `translateY(${(1 - R.ease.out(R.prog(lt, 0, 0.4))) * 60}px)`  // выезд снизу
+    })
+  }
+})
+</script>
+  </div>
+  <div class="ex after">
+    <h3>Стало</h3>
+    <script type="text/plain">
+// Стало. Жёсткая склейка: кадр старой строки, следующий кадр новой. Удар +5 % на склейке и медленный отъезд
+const lines = ['Текст настоящий.', 'Цвет из бренда.', 'Правка за минуту.']
+
+scene({
+  name: 'Склейка',
+  dur: 3.6,
+  html: lines.map(l => `<div class="line">${l}</div>`).join(''),
+  css: `
+    .line { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 140px; letter-spacing: -0.015em; white-space: nowrap; }
+  `,
+  draw({ t, $$ }) {
+    t = R.snap(t, 24)
+    const k = Math.min(lines.length - 1, Math.floor(t / 1.2))      // какая строка сейчас
+    $$('.line').forEach((line, i) => {
+      line.style.display = i === k ? '' : 'none'
+      if (i !== k) return
+      const lt = t - k * 1.2
+      const s = (1 - 0.15 * lt) * (1 + 0.05 * (1 - R.ease.out(R.prog(lt, 0, 0.06))))
+      line.style.transform = `scale(${s})`
+    })
+  }
+})
+</script>
+  </div>
+</div>
+<p class="say">Убери проявления и выезды снизу. Строки меняются жёсткой склейкой, без фейда</p>
+
+<div class="duo">
+  <div class="ex">
+    <h3>Было</h3>
+    <script type="text/plain">
+// Было. Положение считается шесть раз в секунду, да ещё с разгоном и торможением. Строка едет рывками
+scene({
+  name: 'Рывки',
+  dur: 2.4,
+  html: `<div class="line">Строка едет</div>`,
+  css: `
+    .line { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 140px; letter-spacing: -0.015em; white-space: nowrap; }
+  `,
+  draw({ t, $, dur }) {
+    const x = R.mix(-280, 280, R.ease.inOut(R.snap(t, 6) / dur))
+    $('.line').style.transform = `translateX(${x}px)`
+  }
+})
+</script>
+  </div>
+  <div class="ex after">
+    <h3>Стало</h3>
+    <script type="text/plain">
+// Стало. Положение на каждом кадре, скорость постоянная. Строка едет ровно
+scene({
+  name: 'Ровно',
+  dur: 2.4,
+  html: `<div class="line">Строка едет</div>`,
+  css: `
+    .line { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 140px; letter-spacing: -0.015em; white-space: nowrap; }
+  `,
+  draw({ t, $, dur }) {
+    const x = R.mix(-280, 280, t / dur)
+    $('.line').style.transform = `translateX(${x}px)`
+  }
+})
+</script>
+  </div>
+</div>
+<p class="say">Строка едет рывками. Пусть едет ровно, с постоянной скоростью, без ускорения</p>
+
+<div class="duo">
+  <div class="ex">
+    <h3>Было</h3>
+    <script type="text/plain">
+// Было. Четыре одинаково сильных слова с одинаковым ударом. Глазу не за что зацепиться
+const words = ['Идея', 'Сцены', 'Правки', 'Ролик']
+
+scene({
+  name: 'Четыре пика',
+  dur: 3.6,
+  html: words.map(w => `<div class="w">${w}</div>`).join(''),
+  css: `
+    .w { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+         font-weight: 800; font-size: 180px; letter-spacing: -0.02em; color: var(--accent); }
+  `,
+  draw({ t, $$ }) {
+    const k = Math.min(words.length - 1, Math.floor(t / 0.9))
+    $$('.w').forEach((w, i) => {
+      w.style.display = i === k ? '' : 'none'
+      const lt = t - i * 0.9
+      w.style.transform = `scale(${1 + 0.15 * (1 - R.ease.out(R.prog(lt, 0, 0.15)))})`  // одинаковый удар на каждом слове
+    })
+  }
+})
+</script>
+  </div>
+  <div class="ex after">
+    <h3>Стало</h3>
+    <script type="text/plain">
+// Стало. Три слова спокойные и короче, пик один, на последнем слове. Он крупнее, в цвете акцента и держится дольше
+const words = ['Идея', 'Сцены', 'Правки', 'Ролик']
+const starts = [0, 0.7, 1.4, 2.1]
+
+scene({
+  name: 'Один пик',
+  dur: 3.6,
+  html: words.map((w, i) => `<div class="w${i === words.length - 1 ? ' peak' : ''}">${w}</div>`).join(''),
+  css: `
+    .w { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+         font-weight: 600; font-size: 110px; letter-spacing: -0.015em; }
+    .peak { font-weight: 800; font-size: 250px; letter-spacing: -0.03em; color: var(--accent); }
+  `,
+  draw({ t, $$ }) {
+    let k = 0
+    starts.forEach((s, i) => { if (t >= s) k = i })
+    $$('.w').forEach((w, i) => {
+      w.style.display = i === k ? '' : 'none'
+      const lt = t - starts[i]
+      const hit = i === words.length - 1 ? 0.18 * (1 - R.ease.out(R.prog(lt, 0, 0.2))) : 0  // удар только на пике
+      w.style.transform = `scale(${(1 - 0.04 * lt) * (1 + hit)})`                          // медленный отъезд
+    })
+  }
+})
+</script>
+  </div>
+</div>
+<p class="say">Все слова одинаково сильные. Пусть пик будет один, на последнем слове, остальные спокойнее и короче</p>
+
+<h2>Что видно в плеере и что написать ИИ</h2>
+<p class="sub">В готовых фразах замените «Название» на имя сцены с таймлайна, а секунды на свои. Фразу можно вставить в окно «Для ИИ», плеер сам добавит сцену, секунду и для чата код ролика</p>
+
+<h3 class="group first">Плеер показывает ошибку</h3>
+
+<div class="item">
+  <h3>Красная плашка внизу кадра</h3>
+  <p class="why">В коде сцены ошибка. Плеер пишет её текст и строку, название сцены на таймлайне краснеет. Скопируйте текст плашки как есть, по нему ИИ найдёт место</p>
+  <pre class="prompt" id="p-error">Плеер показывает ошибку в сцене «Название». Поправь сцену и пришли её целиком. Текст ошибки ниже
+
+[вставьте текст из красной плашки]</pre>
+  <button class="btn ghost" data-copy-text="p-error">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>После «Поставить» окно пишет про ошибку записи и «скопирован целиком»</h3>
+  <p class="why">Код оборвался. ИИ не&nbsp;дописал ответ или прислал кусок сцены со&nbsp;словами «остальное без изменений». Если код скопирован целиком, ошибся сам ИИ: отправьте ему текст из&nbsp;окна</p>
+  <pre class="prompt" id="p-cut">Твой ответ оборвался. Пришли сцену «Название» целиком, одним блоком кода, с тем же name, до последней скобки</pre>
+  <button class="btn ghost" data-copy-text="p-cut">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>После «Поставить» окно пишет «… is not defined»</h3>
+  <p class="why">Сцена пользуется именем, которого нет ни&nbsp;в&nbsp;ролике, ни&nbsp;в&nbsp;ответе. Обычно это общий кусок из&nbsp;начала ролика, например функция или константа пресета: ИИ его переименовал или забыл прислать новый</p>
+  <pre class="prompt" id="p-undef">Плеер пишет «[вставьте имя] is not defined». Пришли сцену «Название» целиком и вместе с ней в том же блоке кода все общие функции и константы из начала ролика, которыми она пользуется</pre>
+  <button class="btn ghost" data-copy-text="p-undef">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>Окно пишет «В ответе нет кода ролика»</h3>
+  <p class="why">ИИ ответил текстом без кода или написал страницу целиком, с&nbsp;html и&nbsp;script, а&nbsp;не сцены для плеера</p>
+  <pre class="prompt" id="p-page">Перепиши по инструкции, только reel и scene в одном блоке</pre>
+  <button class="btn ghost" data-copy-text="p-page">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>Сцена показывает только своё название и описание</h3>
+  <p class="why">Это заглушка. У сцены нет html и draw, так бывает, когда ИИ прислал раскадровку из одних названий и длительностей</p>
+  <pre class="prompt" id="p-empty">Наполни сцену «Название» по инструкции, с html, css и draw. Что в ней происходит, сказано в note</pre>
+  <button class="btn ghost" data-copy-text="p-empty">Скопировать</button>
+</div>
+
+<h3 class="group">Движение ведёт себя странно</h3>
+
+<div class="item">
+  <h3>После перемотки кадр не такой, как при проигрывании</h3>
+  <p class="why">Или при повторе сцены что-то копится, пропадает, дублируется. Сцена помнит прошлые кадры, а должна рисоваться только от времени t</p>
+  <pre class="prompt" id="p-state">Сцена «Название» после перемотки выглядит иначе, чем при проигрывании. Перепиши draw так, чтобы кадр зависел только от t. Без переменных, которые копят состояние между кадрами, и без append в draw</pre>
+  <button class="btn ghost" data-copy-text="p-state">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>На паузе что-то продолжает двигаться</h3>
+  <p class="why">Или на скорости 0,25× это движение идёт с обычной скоростью. В сцене CSS-анимация или таймер, они живут по своим часам, а не по плееру</p>
+  <pre class="prompt" id="p-css">В сцене «Название» движение идёт само, мимо таймлайна. Убери animation, transition, @keyframes, setTimeout и requestAnimationFrame, считай всё в draw от t</pre>
+  <button class="btn ghost" data-copy-text="p-css">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>При каждом показе точки или буквы встают по-разному</h3>
+  <p class="why">В сцене Math.random(), он даёт новое число на каждом кадре</p>
+  <pre class="prompt" id="p-rand">В сцене «Название» замени Math.random() на R.rand(номер), чтобы кадр был одинаковым при каждом показе</pre>
+  <button class="btn ghost" data-copy-text="p-rand">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>Элемент виден, хотя должен быть спрятан</h3>
+  <p class="why">Если родитель спрятан через visibility, а у потомка стоит visibility visible, потомок всё равно виден</p>
+  <pre class="prompt" id="p-vis">В сцене «Название» на 1,2 с виден элемент, который должен быть спрятан. Прячь блоки целиком через style.display = 'none', а не через visibility</pre>
+  <button class="btn ghost" data-copy-text="p-vis">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>Склейки не попадают в музыку</h3>
+  <p class="why">При 120 ударах в минуту доля 0,5 с, такт 2 с. Длины сцен можно поправить и самим, потянув край сцены на таймлайне с шагом 0,5 с. Если всё кратно, а склейки всё равно мимо, сдвиньте начало музыки при монтаже на первый кадр, где ролик начал двигаться</p>
+  <pre class="prompt" id="p-beat">Темп трека 120 ударов в минуту, доля 0,5 с. Сделай длительности всех сцен кратными 0,5 с, чтобы склейки стояли на долях</pre>
+  <button class="btn ghost" data-copy-text="p-beat">Скопировать</button>
+</div>
+
+<h3 class="group">Кадр выглядит не так</h3>
+
+<div class="item">
+  <h3>Текст вылез за край кадра</h3>
+  <p class="why">Длинная фраза при крупном кегле не помещается в 1920 px</p>
+  <pre class="prompt" id="p-edge">Сцена «Название», на 0,8 с текст выходит за край кадра. Уменьши font-size у этой сцены, отступ от краёв не меньше 96 px, строку на две не дели</pre>
+  <button class="btn ghost" data-copy-text="p-edge">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>Не тот шрифт</h3>
+  <p class="why">Плеер берёт шрифт с компьютера. Если шрифт не установлен или его название в --font написано не так, браузер молча ставит системный. Сверьте точное название в списке шрифтов системы</p>
+  <pre class="prompt" id="p-font">Шрифт задай в reel({ css }) через --font. Первым «Название шрифта», последним system-ui, sans-serif. Начертание через font-weight, а не отдельным именем шрифта</pre>
+  <button class="btn ghost" data-copy-text="p-font">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>Цвета не из бренда</h3>
+  <p class="why">ИИ вписал hex прямо в сцены или придумал свои цвета</p>
+  <pre class="prompt" id="p-color">Все цвета в сценах через var(--fg), var(--accent) и другие переменные из reel({ css }). Своих цветов и hex в сценах не нужно</pre>
+  <button class="btn ghost" data-copy-text="p-color">Скопировать</button>
+</div>
+
+<h3 class="group">ИИ отвечает не так</h3>
+
+<div class="item">
+  <h3>В длинном чате ИИ забыл правила</h3>
+  <p class="why">Снова появились фейды, hex, setTimeout. Отправьте инструкцию ещё раз. Если не помогает, начните новый чат, отправьте «Инструкцию для ИИ», шаблон и весь код ролика из кнопки «Код», затем «Показать весь код»</p>
+  <pre class="prompt" id="p-forgot">Ниже инструкция «Ролик из HTML». Следуй ей во всех следующих ответах, особенно правилу «кадр зависит только от t» и запретам в движении
+
+[вставьте «Инструкцию для ИИ» целиком]</pre>
+  <button class="btn ghost" data-copy-text="p-forgot">Скопировать</button>
+</div>
+
+<div class="item">
+  <h3>ИИ поправил не ту сцену или переписал весь ролик</h3>
+  <p class="why">Правка одной сцены должна прийти одной сценой с тем же названием. Тогда плеер заменит только её</p>
+  <pre class="prompt" id="p-one">Поправь только сцену «Название» и пришли только её, с тем же name. Остальные сцены не трогай</pre>
+  <button class="btn ghost" data-copy-text="p-one">Скопировать</button>
+</div>
+
+<h3 class="group">Файл и браузер</h3>
+
+<div class="item">
+  <h3>Нет кнопки «Связать с файлом»</h3>
+  <p class="why">В Safari и Firefox её нет, браузер не даёт странице писать в файл. Откройте ролик в Chrome, Яндекс Браузере или Edge. Без связи после правок агента обновляйте страницу, а длины сцен сохраняйте кнопкой «Сохранить»</p>
+</div>
+
+<div class="item">
+  <h3>Агент поправил файл, а в плеере ничего не поменялось</h3>
+  <p class="why">Если наверху нет «Связано с» и имени файла, обновите страницу. После нового открытия файла связь включается одним щелчком «Связать снова»</p>
+</div>
+
+<div class="item">
+  <h3>«Сохранить» не спрашивает, куда класть файл</h3>
+  <p class="why">В Safari и Firefox файл уходит в папку загрузок. Переложите его в папку ролика</p>
+</div>
+
+<div class="item">
+  <h3>Наверху горит «Не сохранено»</h3>
+  <p class="why">Ролик или последние изменения пока только в&nbsp;окне браузера, например ролик открыт с&nbsp;сайта и&nbsp;ещё не&nbsp;сохранён. «Сохранить» запишет ролик в файл, в Chrome, Яндекс Браузере и Edge после этого плеер сохраняет в него сам</p>
+</div>
+
+
+<div class="foot">
+  <span class="who">Сделала Вероника Малышева, вопросы и&nbsp;идеи пишите в&nbsp;<a href="https://t.me/night_fury_t">Telegram @night_fury_t</a></span>
+</div>
+</div>
+<script>
+'use strict'
+;(() => {
+const R = (() => {
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x))
+  const mix = (a, b, k) => a + (b - a) * k
+  const prog = (t, start, dur) => dur > 0 ? clamp((t - start) / dur) : (t >= start ? 1 : 0)
+  // Кривая как cubic-bezier в CSS
+  function bezier(x1, y1, x2, y2) {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+    const fx = u => ((ax * u + bx) * u + cx) * u
+    const fy = u => ((ay * u + by) * u + cy) * u
+    const dx = u => (3 * ax * u + 2 * bx) * u + cx
+    return x => {
+      if (x <= 0) return 0
+      if (x >= 1) return 1
+      let u = x
+      for (let i = 0; i < 8; i++) {
+        const e = fx(u) - x
+        if (Math.abs(e) < 1e-7) return fy(u)
+        const d = dx(u)
+        if (Math.abs(d) < 1e-6) break
+        u -= e / d
+      }
+      let lo = 0, hi = 1
+      u = x
+      for (let i = 0; i < 50; i++) {
+        const v = fx(u)
+        if (Math.abs(v - x) < 1e-7) break
+        if (v < x) lo = u; else hi = u
+        u = (lo + hi) / 2
+      }
+      return fy(u)
+    }
+  }
+  const ease = {
+    linear: x => clamp(x),
+    in: bezier(0.42, 0, 1, 1),
+    out: bezier(0, 0, 0.58, 1),
+    inOut: bezier(0.42, 0, 0.58, 1),
+    outCubic: bezier(0.33, 1, 0.68, 1),
+    inOutCubic: bezier(0.65, 0, 0.35, 1),
+    inOutQuint: bezier(0.83, 0, 0.17, 1),    // дописывание слова в рекламе Apple
+    enter: bezier(0.094, 0.656, 0.383, 1),   // въезд первой строки в рекламе Apple
+  }
+  const snap = (t, fps = 24) => Math.floor(t * fps + 1e-6) / fps
+  // Ключи: R.keys(t, [[0, 0], [0.4, 1, R.ease.out], [1, 1]]). Значение числом или массивом чисел
+  function keys(t, list) {
+    if (!list || !list.length) return 0
+    if (t <= list[0][0]) return list[0][1]
+    for (let i = 1; i < list.length; i++) {
+      const [t1, v1, e] = list[i]
+      if (t <= t1) {
+        const [t0, v0] = list[i - 1]
+        const k = (e || ease.linear)(t1 > t0 ? (t - t0) / (t1 - t0) : 1)
+        return Array.isArray(v0) ? v0.map((a, j) => mix(a, v1[j], k)) : mix(v0, v1, k)
+      }
+    }
+    return list[list.length - 1][1]
+  }
+  // Случайное число от 0 до 1, одно и то же для одного номера
+  const rand = n => { const x = Math.sin((n + 1) * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x) }
+  return { clamp, mix, prog, bezier, ease, snap, keys, rand }
+})()
+window.R = R
+
+// ---------- Стили сцены действуют только внутри сцены ----------
+function splitSel(s) {
+  const out = []
+  let depth = 0, cur = ''
+  for (const ch of s) {
+    if (ch === '(' || ch === '[') depth++
+    else if (ch === ')' || ch === ']') depth--
+    if (ch === ',' && !depth) { out.push(cur); cur = '' } else cur += ch
+  }
+  out.push(cur)
+  return out
+}
+const ROOT_SEL = /^(?::root|html|body|:scope)(?![\w-])/
+function prefixSel(sel, root) {
+  return splitSel(sel).map(x => {
+    x = x.trim()
+    if (!ROOT_SEL.test(x)) return `${root} ${x}`
+    while (ROOT_SEL.test(x)) x = x.replace(ROOT_SEL, '').trim()
+    return x ? `${root} ${x}` : root
+  }).join(', ')
+}
+function scopeCss(css, root) {
+  const tmp = document.createElement('style')
+  tmp.media = 'not all'
+  tmp.textContent = css
+  document.head.append(tmp)
+  const walk = rules => [...rules].map(r => {
+    if (r instanceof CSSStyleRule) return prefixSel(r.selectorText, root) + r.cssText.slice(r.selectorText.length)
+    if (r.cssRules && !(r instanceof CSSKeyframesRule)) {
+      const head = r.cssText.slice(0, r.cssText.indexOf('{'))
+      return `${head}{\n${walk(r.cssRules)}\n}`
+    }
+    return r.cssText
+  }).join('\n')
+  let out = ''
+  try { out = walk(tmp.sheet.cssRules) } catch (e) { out = '' }
+  tmp.remove()
+  return out
+}
+
+
+// ---------- Живые примеры. Тот же договор сцены, что в Плеер.html ----------
+// Код примера лежит в <script type="text/plain"> рядом с кадром. Этот же текст копирует кнопка «Скопировать для ИИ»
+const NB = '\u00a0'
+const exAll = []
+let exUid = 0, exSpeed = 1
+
+function exLoad(code) {
+  const o = { width: 1920, height: 1080, css: [] }, list = []
+  const reel = (r = {}) => {
+    if (+r.width > 0) o.width = +r.width
+    if (+r.height > 0) o.height = +r.height
+    if (r.css) o.css.push(String(r.css))
+  }
+  const scene = d => { list.push(d); return d }
+  new Function('scene', 'reel', 'R', code)(scene, reel, R)
+  return { o, list }
+}
+
+function exMount(box, code) {
+  const id = 'x' + (++exUid)
+  const ex = { box, code, scenes: [], total: 0, cur: -1, T: 0, t0: performance.now(), paused: false, seen: false }
+  const frame = document.createElement('div'), stage = document.createElement('div')
+  const bar = document.createElement('i'), err = document.createElement('pre')
+  frame.className = 'ex-frame'; stage.className = 'ex-stage'; bar.className = 'ex-bar'; err.className = 'ex-err'
+  stage.dataset.ex = id
+  frame.append(stage, bar, err)
+  box.prepend(frame)
+  Object.assign(ex, { frame, stage, bar, err })
+  try {
+    const { o, list } = exLoad(code)
+    ex.o = o
+    stage.style.width = o.width + 'px'
+    stage.style.height = o.height + 'px'
+    const css = o.css.map(c => scopeCss(c, `[data-ex="${id}"]`))
+    list.forEach((d, i) => {
+      const s = { name: String(d.name || ''), dur: +d.dur, draw: d.draw, start: ex.total }
+      ex.total += s.dur
+      s.slot = document.createElement('div')
+      s.slot.className = 'ex-slot'
+      s.el = document.createElement('div')
+      s.el.className = 'ex-scene'
+      s.el.dataset.s = `${id}-${i}`
+      s.el.innerHTML = d.html || ''
+      s.slot.append(s.el)
+      stage.append(s.slot)
+      s.$ = q => s.el.querySelector(q)
+      s.$$ = q => [...s.el.querySelectorAll(q)]
+      if (d.css) css.push(scopeCss(String(d.css), `[data-s="${id}-${i}"]`))
+      ex.scenes.push(s)
+    })
+    const st = document.createElement('style')
+    st.textContent = css.join('\n')
+    document.head.append(st)
+  } catch (e) { ex.error = e.message }
+  frame.addEventListener('click', () => {
+    ex.paused = !ex.paused
+    if (!ex.paused) ex.t0 = performance.now() - ex.T * 1000 / exSpeed
+    frame.classList.toggle('ex-paused', ex.paused)
+  })
+  new ResizeObserver(() => exFit(ex)).observe(box)
+  exSeen.observe(frame)
+  exFit(ex)
+  exDraw(ex, 0)
+  exAll.push(ex)
+  return ex
+}
+
+function exFit(ex) {
+  if (!ex.o) return
+  const W = ex.o.width, H = ex.o.height
+  const k = Math.min(ex.box.clientWidth / W, (H > W ? 560 : 1e9) / H)
+  ex.frame.style.width = W * k + 'px'
+  ex.frame.style.height = H * k + 'px'
+  ex.stage.style.transform = `scale(${k})`
+}
+
+function exDraw(ex, T) {
+  if (ex.error || !ex.scenes.length) {
+    ex.err.textContent = ex.error || ''
+    ex.err.classList.toggle('on', !!ex.error)
+    return
+  }
+  let i = ex.scenes.findIndex(s => T < s.start + s.dur)
+  if (i < 0) i = ex.scenes.length - 1
+  const s = ex.scenes[i]
+  if (i !== ex.cur) {
+    if (ex.scenes[ex.cur]) ex.scenes[ex.cur].slot.classList.remove('on')
+    s.slot.classList.add('on')
+    ex.cur = i
+  }
+  const t = Math.min(s.dur, Math.max(0, T - s.start))
+  try {
+    if (s.draw) s.draw({ t, p: t / s.dur, dur: s.dur, T, el: s.el, $: s.$, $$: s.$$, w: ex.o.width, h: ex.o.height })
+  } catch (e) {
+    ex.error = `Сцена «${s.name}»: ${e.message}`
+    exDraw(ex, T)
+  }
+  ex.bar.style.width = (T / ex.total * 100) + '%'
+}
+
+const exSeen = new IntersectionObserver(list => {
+  for (const e of list) {
+    const ex = exAll.find(x => x.frame === e.target)
+    if (ex) ex.seen = e.isIntersecting
+  }
+}, { rootMargin: '100px' })
+
+function exTick(now) {
+  for (const ex of exAll) {
+    if (!ex.seen || ex.paused || !ex.total || ex.error) continue
+    ex.T = ((now - ex.t0) / 1000 * exSpeed) % ex.total
+    exDraw(ex, ex.T)
+  }
+  requestAnimationFrame(exTick)
+}
+
+function exSetSpeed(v) {
+  const now = performance.now()
+  for (const ex of exAll) ex.t0 = now - ex.T * 1000 / v
+  exSpeed = v
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true } catch (e) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.append(ta)
+    ta.select()
+    let ok = false
+    try { ok = document.execCommand('copy') } catch (e2) { ok = false }
+    ta.remove()
+    return ok
+  }
+}
+
+// Неразрывный пробел после однобуквенных слов в тексте страницы. Код примеров не трогаем
+function typograph(root) {
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => n.parentElement.closest('script, style, code, pre, textarea') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  })
+  const re = /(^|[\s(«])([АаВвИиКкОоСсУуЯ]) /g
+  for (let n; (n = walk.nextNode());) {
+    const v = n.nodeValue.replace(re, `$1$2${NB}`).replace(re, `$1$2${NB}`)
+    if (v !== n.nodeValue) n.nodeValue = v
+  }
+}
+
+async function copyWithNote(btn, text) {
+  const ok = await copyText(text)
+  const was = btn.textContent
+  btn.textContent = ok ? 'Скопировано' : 'Не получилось, выделите текст и скопируйте руками'
+  setTimeout(() => { btn.textContent = was }, 1600)
+}
+
+// Каждый .ex на странице: кадр с примером, кнопки скорости и копирования.
+// Кнопка data-copy копирует подводку из .ex-prompt и код примера.
+// Кнопка data-copy-text="id" копирует текст элемента с этим id, например промт в <pre>
+function exInit() {
+  document.querySelectorAll('.ex').forEach(box => {
+    const src = box.querySelector('script[type="text/plain"]')
+    if (!src) return
+    const code = src.textContent.replace(/^\n+|\s+$/g, '')
+    exMount(box, code)
+    const btn = box.querySelector('[data-copy]')
+    if (btn) btn.addEventListener('click', () => {
+      const head = (box.querySelector('.ex-prompt') || {}).textContent || ''
+      copyWithNote(btn, (head.trim() ? head.trim() + '\n\n' : '') + '```js\n' + code + '\n```')
+    })
+  })
+  document.querySelectorAll('[data-copy-text]').forEach(btn => btn.addEventListener('click', () => {
+    const el = document.getElementById(btn.dataset.copyText)
+    if (el) copyWithNote(btn, el.textContent.trim())
+  }))
+  document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => {
+    exSetSpeed(+b.dataset.speed)
+    document.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('on', x === b))
+  }))
+  // Свои страницы и «Режим правок» открываются в этой же вкладке, чтобы работала кнопка «Назад».
+  // Чужие сайты в новой вкладке. Ссылка на текущую страницу не нужна
+  document.querySelectorAll('a[href]').forEach(a => {
+    if (a.classList.contains('on') && !a.closest('.top')) { a.removeAttribute('href'); return }
+    const u = new URL(a.href, location.href)
+    if (u.origin === location.origin || u.protocol === 'file:' || u.href.startsWith('https://tomb-raider.github.io/')) return
+    a.target = '_blank'
+    a.rel = 'noopener'
+  })
+  typograph(document.body)
+  requestAnimationFrame(exTick)
+}
+
+// Для проверки из консоли: examples.seek(0, 1.5) ставит первый пример на паузу на 1,5 с
+window.examples = {
+  all: exAll,
+  mount: exMount,
+  seek(i, T) {
+    const ex = exAll[i]
+    ex.paused = true
+    ex.frame.classList.add('ex-paused')
+    ex.T = Math.min(ex.total - 1e-6, Math.max(0, T))
+    exDraw(ex, ex.T)
+  },
+}
+
+exInit()
+})()
+</script>
+</body>
+</html>

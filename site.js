@@ -115,3 +115,59 @@ document.addEventListener('click', e => {
   if (el.dataset.copy !== undefined) return copy(el.closest('.agent').querySelector('pre').textContent, 'Фраза скопирована')
   toast(el.dataset.toast)
 })
+
+/* ---------- Закладка «Режим правок» на странице «Презентация», вкладка «Сайт в интернете» ----------
+   Справа схема браузера: стрелка от кнопки на странице к месту на панели закладок, копия кнопки с курсором
+   едет туда по кругу и место заполняется. Пока настоящую кнопку тащат, вверху окна подсказка #toTop */
+document.querySelectorAll('.bmk-demo').forEach(demo => {
+  const btn = demo.querySelector('.br-btn'), slot = demo.querySelector('.br-slot')
+  const line = demo.querySelector('.bmk-arrow .line'), head = demo.querySelector('.bmk-arrow .head')
+  const still = matchMedia('(prefers-reduced-motion: reduce)')
+  let ghost = null, anims = []
+  const DUR = 3400
+  function draw() {
+    anims.forEach(a => a.cancel()); anims = []
+    if (ghost) { ghost.remove(); ghost = null }
+    const r = demo.getBoundingClientRect()
+    if (!r.width) return                                   // вкладка скрыта, нарисуем, когда откроют
+    const b = btn.getBoundingClientRect(), s = slot.getBoundingClientRect()
+    const x1 = b.left + b.width / 2 - r.left, y1 = b.top - r.top - 10
+    const x2 = s.left + s.width / 2 - r.left, y2 = s.bottom - r.top + 8
+    const cx = (x1 + x2) / 2 + (x2 >= x1 ? -40 : 40), cy = (y1 + y2) / 2
+    line.setAttribute('d', `M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}`)
+    const ang = Math.atan2(y2 - cy, x2 - cx) * 180 / Math.PI + 90
+    head.setAttribute('d', `M${x2 - 6} ${y2 + 8} L${x2} ${y2} L${x2 + 6} ${y2 + 8}`)
+    head.setAttribute('transform', `rotate(${ang} ${x2} ${y2})`)
+    if (still.matches) return
+    ghost = btn.cloneNode(true)
+    ghost.classList.add('br-ghost')
+    ghost.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 16 16"><path d="M1.5 1.5l5 12.5 1.9-5.1 5.1-1.9z"/></svg>')
+    demo.appendChild(ghost)
+    const gx = b.left - r.left, gy = b.top - r.top
+    const tx = s.left + s.width / 2 - r.left - b.width / 2, ty = s.top + s.height / 2 - r.top - b.height / 2
+    const mx = (gx + tx) / 2 + (tx >= gx ? -40 : 40), my = (gy + ty) / 2
+    const at = (x, y, k) => `translate(${x}px, ${y}px) scale(${k})`
+    anims.push(ghost.animate([
+      { transform: at(gx, gy, 1), opacity: 0, offset: 0 },
+      { transform: at(gx, gy, 1.04), opacity: 1, offset: 0.12 },
+      { transform: at(mx, my, 0.94), opacity: 1, offset: 0.38 },
+      { transform: at(tx, ty, 0.8), opacity: 1, offset: 0.55 },
+      { transform: at(tx, ty, 0.8), opacity: 0, offset: 0.62 },
+      { transform: at(tx, ty, 0.8), opacity: 0, offset: 1 }
+    ], { duration: DUR, iterations: Infinity, easing: 'ease-in-out' }))
+    // Место на панели заполняется, когда копия «легла» туда, и снова пустеет перед следующим кругом
+    const empty = { background: 'transparent', color: 'var(--ui-mute)', borderColor: 'var(--ui-mute)' }
+    const full = { background: 'var(--ui-line2)', color: 'var(--ui-fg)', borderColor: 'transparent' }
+    anims.push(slot.animate([
+      { ...empty, offset: 0 }, { ...empty, offset: 0.55 }, { ...full, offset: 0.57 },
+      { ...full, offset: 0.9 }, { ...empty, offset: 0.94 }, { ...empty, offset: 1 }
+    ], { duration: DUR, iterations: Infinity }))
+  }
+  new ResizeObserver(draw).observe(demo)
+  document.fonts && document.fonts.ready.then(draw)
+})
+const toTop = document.getElementById('toTop')
+if (toTop) {
+  document.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('.bmk .bm')) toTop.classList.add('on') })
+  document.addEventListener('dragend', () => toTop.classList.remove('on'))
+}

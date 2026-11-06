@@ -35,13 +35,13 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
   });
 })();
 </script>
-<link rel="stylesheet" href="site.css?v=202611061040">
+<link rel="stylesheet" href="site.css?v=202611061317">
 </head>
 <body>
 <div class="site">
   <header class="s-top">
     <a class="s-name" href="index.html"><img src="logo-white.svg" alt="">Ролик и&nbsp;правки в&nbsp;HTML</a>
-    <nav class="seg"><a href="index.html">Что это</a><a class="on" href="Презентация.html">Презентация или сайт</a><a href="Видео.html">Видео</a></nav>
+    <nav class="seg"><a href="index.html">Обзор</a><a class="on" href="Презентация.html">Презентация или&nbsp;сайт</a><a href="Видео.html">Видео</a><a href="%D0%9F%D1%80%D0%B8%D1%91%D0%BC%D1%8B%20%D0%B4%D0%B2%D0%B8%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F.html">Материалы</a></nav>
   </header>
 
   <h1>Презентация или сайт</h1>
@@ -90,9 +90,21 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
   <section data-panel="site">
     <div class="split">
       <div>
-        <div class="drop">
-          <p class="big">Перетащите кнопку на&nbsp;панель закладок</p>
-          <a class="bm" href="javascript:(function(){if(window.__pravki)return;var d=0,f=function(){if(d||window.__pravki)return;d=1;alert('Этот сайт не пускает режим правок. Если у\u00a0вас есть файлы сайта, откройте их на сайте пакета')};try{var s=document.createElement('script');s.src='https://tomb-raider.github.io/rezhim-pravok/pravki.js?v='+Date.now();s.setAttribute('data-auto','1');s.onerror=f;document.documentElement.appendChild(s)}catch(e){f()}setTimeout(f,15000)})()">Режим правок</a>
+        <!-- Слева настоящая кнопка в пунктирной рамке, её тащат на панель закладок. Справа схема браузера:
+             копия кнопки сама едет на панель закладок, по кругу (site.js). Пока кнопку тащат, вверху окна подсказка #toTop -->
+        <div class="bmk">
+          <div class="bmk-grab">
+            <a class="bm" href="javascript:(function(){if(window.__pravki)return;var d=0,f=function(){if(d||window.__pravki)return;d=1;alert('Этот сайт не пускает режим правок. Если у\u00a0вас есть файлы сайта, откройте их на сайте пакета')};try{var s=document.createElement('script');s.src='https://tomb-raider.github.io/rezhim-pravok/pravki.js?v='+Date.now();s.setAttribute('data-auto','1');s.onerror=f;document.documentElement.appendChild(s)}catch(e){f()}setTimeout(f,15000)})()"><svg class="grip" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="14" r="1.5"/></svg>Режим правок</a>
+            <p>Эту кнопку перетащите наверх, на&nbsp;панель закладок</p>
+          </div>
+          <div class="bmk-demo" aria-hidden="true">
+            <div class="br">
+              <div class="br-top"><i></i><i></i><i></i><span class="br-url"></span></div>
+              <div class="br-bar"><span class="br-fake"></span><span class="br-fake"></span><span class="br-slot">Режим правок</span><span class="br-cap">Панель закладок</span></div>
+              <div class="br-page"><i class="br-line"></i><i class="br-line short"></i><span class="br-btn">Режим правок</span></div>
+            </div>
+            <svg class="bmk-arrow"><path class="line"/><path class="head"/></svg>
+          </div>
         </div>
         <p class="note">Закладка включает режим правок прямо на открытом сайте, даже если его файлов у&nbsp;вас нет. Сайт не меняется, правки видите только вы</p>
       </div>
@@ -103,6 +115,15 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
       </ol>
     </div>
     <p class="note">Некоторые большие сайты своей защитой не пускают закладку, тогда она скажет об&nbsp;этом</p>
+
+    <!-- Подсказка: авторский надзор. Слева кусок сайта с замечанием, как его ставит режим правок -->
+    <div class="tip-ex">
+      <div class="tip-site" aria-hidden="true"><i class="h"></i><i></i><i class="s"></i><span class="tip-btn">Подробнее</span><span class="tip-note">Кнопка как в&nbsp;макете, отступ сверху 24&nbsp;px</span></div>
+      <div>
+        <h3>Пригодится на&nbsp;авторском надзоре</h3>
+        <p>Откройте сайт, который уже сверстали, и&nbsp;покажите прямо на&nbsp;нём, что не&nbsp;так. Сдвиньте блок, поправьте текст, оставьте замечание, и&nbsp;разработчик получит всё одним сообщением</p>
+      </div>
+    </div>
   </section>
 
   <div class="foot">
@@ -110,12 +131,14 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
     <a href="https://github.com/Tomb-Raider/rezhim-pravok/archive/refs/heads/main.zip">Скачать пакет</a>
     <a href="https://github.com/Tomb-Raider/rezhim-pravok">GitHub</a>
     <span>Лицензия MIT</span>
+    <span class="who">Сделала Вероника Малышева, вопросы и&nbsp;идеи пишите в&nbsp;<a href="https://t.me/night_fury_t">Telegram @night_fury_t</a></span>
   </div>
 </div>
 <input type="file" id="dirIn" webkitdirectory hidden>
 <input type="file" id="fileIn" accept=".html,.htm" multiple hidden>
 <div id="drop">Отпустите, чтобы открыть</div>
-<script src="site.js?v=202611061040"></script>
-<script src="open.js?v=202611061040"></script>
+<div id="toTop" aria-hidden="true"><svg viewBox="0 0 26 34"><path d="M13 32V3M3 13L13 3l10 10"/></svg>Отпустите на&nbsp;панели закладок, она над&nbsp;страницей</div>
+<script src="site.js?v=202611061317"></script>
+<script src="open.js?v=202611061317"></script>
 </body>
 </html>
