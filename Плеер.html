@@ -162,6 +162,11 @@ body.p-recording .p-view { cursor: none; }
 .p-view:not(.p-editing) .p-stage [data-p-del] { display: none !important; }
 .p-editbar { grid-area: keys; display: flex; align-items: center; flex-wrap: wrap; gap: 2px; padding: 0 10px 10px; }
 .p-editbar .p-eye { display: inline-flex; align-items: center; justify-content: center; }
+.p-reset { display: inline-flex; align-items: center; gap: 2px; }
+.p-reset[hidden] { display: none; }
+.p-reset-q { padding: 0 6px; color: var(--ui-fg); }
+.p-btn.p-danger { background: #E5484D; color: #fff; }
+.p-btn.p-danger:hover { background: #D63F44; color: #fff; }
 .p-editbar .p-hints { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-left: 14px; color: var(--ui-mute); font-size: 12px; }
 
 /* Телефон: сверху название, под ним кнопки, кадр, время, шаг и скорость, таймлайн.
@@ -364,10 +369,12 @@ scene({
     <button class="p-btn" data-act="grid" title="Центр и трети кадра. Края и центры прилипают к ним">Сетка</button>
     <button class="p-btn" data-act="undo" title="Назад, Cmd или Ctrl + Z" disabled>Назад</button>
     <button class="p-btn" data-act="redo" title="Вперёд, Shift + Cmd или Ctrl + Z" disabled>Вперёд</button>
-    <button class="p-btn" data-act="clear" title="Убрать все правки из плеера">Убрать правки</button>
+    <button class="p-btn" data-act="unedit" title="Убрать все правки выбранного объекта, он станет как в коде" disabled>Убрать правку</button>
+    <button class="p-btn" data-act="clear" title="Сбросить все правки плеера">Сбросить</button>
+    <span class="p-reset" hidden><span class="p-reset-q"></span><button class="p-btn p-danger" data-act="resetyes">Сбросить</button><button class="p-btn" data-act="resetno">Отмена</button></span>
     <span class="p-sep"></span>
     <button class="p-btn p-eye" data-act="editoff" title="Скрыть режим правок: рамки и подсказки пропадут, правки останутся в кадре. Кнопка «Правки» сверху вернёт режим" aria-label="Скрыть режим правок"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg></button>
-    <span class="p-hints"><span>Тяните объект</span><span>Двойной щелчок на слой глубже и в текст</span><span>Esc на слой выше</span><span>Alt + щелчок замечание</span><span>Стрелки двигают выбранное</span><span>Delete убирает объект, ещё раз возвращает</span></span>
+    <span class="p-hints"><span>Тяните объект</span><span>Двойной щелчок на слой глубже и в текст</span><span>Shift уровнем выше</span><span>Esc снимает выбор</span><span>Alt + щелчок замечание</span><span>Стрелки двигают выбранное</span><span>Delete убирает объект, ещё раз возвращает</span></span>
   </div>
 </div>
 
@@ -1340,6 +1347,9 @@ document.addEventListener('click', e => {
   else if (b.dataset.act === 'undo') undo()
   else if (b.dataset.act === 'redo') redo()
   else if (b.dataset.act === 'clear') clearEdits()
+  else if (b.dataset.act === 'resetyes') resetAll()
+  else if (b.dataset.act === 'resetno') askReset(false)
+  else if (b.dataset.act === 'unedit') uneditSel()
   else if (b.dataset.mode) setMode(b.dataset.mode)
   if (e.detail) b.blur()
 })
@@ -2010,7 +2020,7 @@ function objectAt(x, y) {
   }
   return null
 }
-// Двойной щелчок и Alt + Shift: самый мелкий элемент под курсором
+// Двойной щелчок мимо слоёв: самый мелкий элемент под курсором
 function deepAt(x, y) {
   const s = scenes[cur], sr = stage.getBoundingClientRect()
   if (!s) return null
@@ -2034,7 +2044,7 @@ function textAt(x, y) {
 }
 
 // Слои как в Figma. Двойной щелчок по выбранному выбирает слой внутри него под курсором,
-// после этого щелчок выбирает соседние части на том же уровне. Esc поднимает на слой выше.
+// после этого щелчок выбирает соседние части на том же уровне. С Shift берётся слой выше, Esc снимает выбор.
 // Обёртки того же размера пропускаем: снаружи их не отличить от родителя
 const sameBox = (a, b) => Math.abs(a.left - b.left) < 1.5 && Math.abs(a.top - b.top) < 1.5 && Math.abs(a.right - b.right) < 1.5 && Math.abs(a.bottom - b.bottom) < 1.5
 function hitIn(box, x, y) {
@@ -2072,6 +2082,8 @@ function ctxOf(el) {
   }
   return null
 }
+// С Shift щелчок, перетаскивание и замечание берут слой, частью которого объект выбран, как на сайтах
+const upIf = (shift, el) => shift && el ? ctxOf(el) || el : el
 // Что выберет щелчок: внутри слоя, куда зашли, его части, снаружи объекты сцены
 function pickAt(x, y) {
   const s = scenes[cur]
@@ -2455,8 +2467,8 @@ view.addEventListener('pointerdown', e => {
   if (textEdit) { if (textEdit.el.contains(e.target)) return; endText() }
   if (noteFor) closeNote(true)
   if (e.altKey) { e.preventDefault(); return }     // замечание ставит щелчок
-  // Выбранное тянется целиком, за что его ни возьми
-  const el = edSel && !e.shiftKey && inRect(vrect(edSel), x, y, 0) ? edSel : pickAt(x, y)
+  // Выбранное тянется целиком, за что его ни возьми. С Shift берётся уровень выше, как на сайтах
+  const el = upIf(e.shiftKey, edSel && inRect(vrect(edSel), x, y, 0) ? edSel : pickAt(x, y))
   if (!el) { if (edSel) edSelect(null); edCtx = null; return }
   e.preventDefault()
   pause()
@@ -2480,7 +2492,7 @@ view.addEventListener('pointermove', e => {
   const d = edDrag
   if (!d) {
     if (e.buttons || textEdit) return
-    const h = pickAt(e.clientX, e.clientY)
+    const h = upIf(e.shiftKey, pickAt(e.clientX, e.clientY))
     if (h !== edHov) { edHov = h; view.style.cursor = h ? 'grab' : ''; paintEdit() }
     return
   }
@@ -2646,7 +2658,7 @@ view.addEventListener('click', e => {
   e.preventDefault()
   e.stopPropagation()
   const x = e.clientX, y = e.clientY
-  const el = e.shiftKey ? deepAt(x, y) : edSel && inRect(vrect(edSel), x, y, 0) ? edSel : pickAt(x, y)
+  const el = upIf(e.shiftKey, edSel && inRect(vrect(edSel), x, y, 0) ? edSel : pickAt(x, y))
   if (el) openNote(el)
 }, true)
 function openNote(el) {
@@ -2709,7 +2721,7 @@ document.addEventListener('keydown', e => {
   const step = e.shiftKey ? 10 : 1
   const dir = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key]
   if (dir) { e.preventDefault(); e.stopPropagation(); nudge(dir[0], dir[1]); return }
-  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); edSelect(ctxOf(edSel)); return }   // на слой выше
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); edSelect(null); return }   // снимает выбор, как на сайтах
   if (e.key === 'Enter') {
     const tel = ownText(edSel) ? edSel : [...edSel.querySelectorAll('*')].find(ownText)
     if (tel) { e.preventDefault(); e.stopPropagation(); startText(scenes[cur], tel) }
@@ -2768,14 +2780,35 @@ function afterHist() {
   saveRecs()
   render()
 }
+// «Сбросить» спрашивает прямо в строке правок, как на сайтах, а не окном браузера
+const plural = n => n % 10 === 1 && n % 100 !== 11 ? 'правку' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'правки' : 'правок'
+function askReset(on) {
+  $('.p-reset').hidden = !on
+  $('[data-act="clear"]').hidden = on
+  if (on) $('.p-reset-q').textContent = `Сбросить ${liveRecs().length} ${plural(liveRecs().length)}?`
+}
 function clearEdits() {
-  const n = liveRecs().length
-  if (!n) { say('Правок нет'); return }
-  if (!confirm(`Убрать все правки из${NB}плеера (${n})?`)) return
+  if (!liveRecs().length) { say('Правок нет'); return }
+  askReset(true)
+}
+function resetAll() {
+  askReset(false)
   pushHist()
   recs = {}
   saveRecs()
   render()
+  say(`Правки сброшены. ${CMD}${NB}+${NB}Z вернёт их`)
+}
+// Убрать все правки выбранного объекта: он станет как в коде, замечание к нему тоже уйдёт
+function uneditSel() {
+  const s = scenes[cur], key = edSel && s ? keyOf(s, edSel) : null
+  if (!key || !recs[key]) return
+  pushHist()
+  delete recs[key]
+  saveRecs()
+  selInfo = null
+  render()
+  say('Правки объекта убраны, он снова как в коде')
 }
 
 // ---------- Правки: кнопки, отметки на таймлайне, запись для ИИ ----------
@@ -2785,6 +2818,7 @@ function setEdit(on) {
   else {
     if (textEdit) endText()
     if (noteFor) closeNote(true)
+    askReset(false)
     edSel = null; selInfo = null; edHov = null; edCtx = null
     view.style.cursor = ''
   }
@@ -2795,7 +2829,7 @@ function setEdit(on) {
   $('.p-editbar').hidden = !editOn
   paintModes()
   render()
-  if (editOn) say(`Тяните объект. Двойной щелчок заходит на${NB}слой глубже, а${NB}у${NB}текста правит его. Esc на${NB}слой выше`)
+  if (editOn) say(`Тяните объект. Двойной щелчок заходит на${NB}слой глубже, а${NB}у${NB}текста правит его. С${NB}Shift берётся слой выше`)
 }
 function paintModes() {
   const s = scenes[cur], r = edSel && s ? recs[keyOf(s, edSel)] : null
@@ -2804,6 +2838,7 @@ function paintModes() {
   $('[data-act="grid"]').classList.toggle('p-on', gridOn)
   $('[data-act="undo"]').disabled = !edHist.back.length
   $('[data-act="redo"]').disabled = !edHist.fwd.length
+  $('[data-act="unedit"]').disabled = !r
 }
 function setMode(m) {
   defMode = m
