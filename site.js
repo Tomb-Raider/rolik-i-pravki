@@ -171,3 +171,62 @@ if (toTop) {
   document.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('.bmk .bm')) toTop.classList.add('on') })
   document.addEventListener('dragend', () => toTop.classList.remove('on'))
 }
+
+/* Закладка в разных браузерах: сайт сам узнаёт браузер и говорит, как называется панель и как её показать.
+   Safari прячет панель «Избранное», её сначала включают. Arc закладки с кодом не запускает (ищет их текст в Google),
+   поэтому там честно предлагаем открыть страницу в Safari или Chrome. Строка «Другой браузер?» переключает вручную */
+if (document.querySelector('[data-bm="how"]')) {
+  const MAC = /Mac|iPhone|iPad/.test(navigator.platform)
+  const SB = MAC ? 'Cmd + Shift + B' : 'Ctrl + Shift + B', KB = MAC ? '⇧⌘B' : 'Ctrl+Shift+B'
+  const NAMES = { chrome: 'Chrome', yandex: 'Яндекс Браузер', edge: 'Edge', safari: 'Safari', firefox: 'Firefox', arc: 'Arc' }
+  const NB = ' '
+  const T = {
+    chrome:  { cap: 'Панель закладок', where: `на${NB}панель закладок`, show: `Если панели не${NB}видно, ${SB}` },
+    yandex:  { cap: 'Панель закладок', where: `на${NB}панель закладок`, show: `Если панели не${NB}видно, ${SB}` },
+    edge:    { cap: 'Избранное', where: `на${NB}панель избранного`, at: `на${NB}панели избранного`, show: `Если панели не${NB}видно, ${SB}` },
+    firefox: { cap: 'Панель закладок', where: `на${NB}панель закладок`, show: `Если панели не${NB}видно, включите её в${NB}меню «Вид», «Панели инструментов», «Панель закладок»` },
+    safari:  { cap: 'Избранное', where: `на${NB}панель «Избранное»`, at: `на${NB}панели «Избранное»`, first: true },
+    arc:     { cap: 'Панель закладок', arc: true }
+  }
+  const $ = k => document.querySelector(`[data-bm="${k}"]`)
+  const btn = document.querySelector('.bmk .bm')
+  function detect() {
+    const ua = navigator.userAgent, cs = getComputedStyle(document.documentElement)
+    if (cs.getPropertyValue('--arc-palette-title').trim() || cs.getPropertyValue('--arc-palette-background').trim()) return 'arc'
+    if (/YaBrowser/.test(ua)) return 'yandex'
+    if (/Edg\//.test(ua)) return 'edge'
+    if (/Firefox\//.test(ua)) return 'firefox'
+    if (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS/.test(ua)) return 'safari'
+    return 'chrome'
+  }
+  function show(b) {
+    const t = T[b]
+    $('cap').textContent = t.cap
+    btn.hidden = !!t.arc
+    $('copylink').hidden = !t.arc
+    if (t.arc) {
+      $('how').innerHTML = `В${NB}Arc закладки с${NB}кодом не${NB}запускаются. Откройте эту страницу в${NB}Safari или Chrome и${NB}перетащите кнопку там`
+      $('step').innerHTML = `Arc закладки с${NB}кодом не${NB}запускает. Откройте эту страницу в${NB}Safari или Chrome и${NB}перетащите кнопку «Режим правок» на${NB}панель закладок`
+    } else if (t.first) {
+      $('how').innerHTML = `Сначала включите панель «Избранное» клавишами <kbd>${KB}</kbd>. Потом перетащите эту кнопку наверх, на${NB}неё`
+      $('step').textContent = `Включите панель «Избранное» клавишами ${SB} или в${NB}меню «Вид». Потом перетащите кнопку «Режим правок» на${NB}неё`
+    } else {
+      $('how').textContent = `Эту кнопку перетащите наверх, ${t.where}`
+      $('step').textContent = `Перетащите кнопку «Режим правок» ${t.where}. ${t.show}`
+    }
+    $('drop').textContent = `Отпустите ${t.at || `на${NB}панели закладок`}, она над${NB}страницей`
+    $('other').hidden = false
+    $('other').innerHTML = 'Другой браузер?' + Object.keys(NAMES).filter(k => k !== b).map(k => `<button data-brw="${k}">${NAMES[k]}</button>`).join('')
+    // Схема браузера перерисуется сама: её размеры следит ResizeObserver
+  }
+  document.addEventListener('click', e => {
+    const o = e.target.closest('[data-brw]')
+    if (o) { show(o.dataset.brw); return }
+    if (e.target.closest('[data-bm="copylink"]')) {
+      navigator.clipboard?.writeText(location.href.split('#')[0] + '#site').then(() => toast('Ссылка скопирована. Вставьте её в Safari или Chrome'), () => toast('Браузер не дал скопировать'))
+    }
+  })
+  show(detect())
+  // Arc подмешивает свои цвета чуть позже загрузки, проверим ещё раз
+  setTimeout(() => { if (detect() === 'arc') show('arc') }, 1200)
+}

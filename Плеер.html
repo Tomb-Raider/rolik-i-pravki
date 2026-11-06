@@ -1885,7 +1885,10 @@ function labelOf(el) {
 }
 function ensureRec(s, el) {
   const key = keyOf(s, el)
-  if (!recs[key]) recs[key] = { key, scene: s.name, path: pathIn(s.el, el), label: labelOf(el), t: sceneT(), dx: 0, dy: 0, k: 1, mode: defMode, before: null, after: null, note: '', snap: [] }
+  if (!recs[key]) {
+    recs[key] = { key, scene: s.name, path: pathIn(s.el, el), label: labelOf(el), t: sceneT(), dx: 0, dy: 0, k: 1, mode: defMode, before: null, after: null, note: '', snap: [] }
+    try { recs[key].twin = twinOf(s, el) } catch (e) { /* без отпечатка правка ищет объект по адресу */ }
+  }
   elCache.set(key, el)
   return recs[key]
 }
@@ -1903,9 +1906,19 @@ function rekey(s, moves) {
 
 // Отпечаток объекта: тег, классы, текст и что внутри. Одинаковые по отпечатку объекты это двойники,
 // убранный объект плеер ищет среди них по порядку, а не по адресу, который съезжает после правок кода
-const sigOf = el => [el.tagName.toLowerCase(), [...el.classList].filter(c => !/^p-/.test(c)).sort().join('.'), clean(el.textContent),
+const sigOf = (el, withText = true) => [el.tagName.toLowerCase(), [...el.classList].filter(c => !/^p-/.test(c)).sort().join('.'), withText ? clean(el.textContent) : '',
   [...el.querySelectorAll('*')].map(k => k.tagName.toLowerCase()).join(','), el.getAttribute('src') || el.getAttribute('href') || ''].join('|')
-const twins = (s, sig) => { const tag = sig.slice(0, sig.indexOf('|')); return [...s.el.querySelectorAll('*')].filter(k => k.tagName.toLowerCase() === tag && sigOf(k) === sig) }
+const twins = (s, sig, withText = true) => {
+  const tag = sig.slice(0, sig.indexOf('|'))
+  return [...s.el.querySelectorAll('*')].filter(k => k.tagName.toLowerCase() === tag && sigOf(k, withText) === sig)
+}
+// Вид: цвет, фон и шрифт. Двойники разного цвета, например кружки палитры, по нему различаются
+const lookOf = el => { const c = getComputedStyle(el); return [c.color, c.backgroundColor, c.backgroundImage, c.fill, c.stroke, c.fontSize, c.fontWeight].join('|') }
+// Отпечаток для любой правки: устройство без текста, вид и место среди таких же
+function twinOf(s, el) {
+  const shape = sigOf(el, false), look = lookOf(el), g = twins(s, shape, false).filter(k => lookOf(k) === look)
+  return { shape, look, n: g.length, rank: Math.max(0, g.indexOf(el)), t: sceneT() }
+}
 // Каким объект был в коде в этот момент, без правок поверх: так же его потом увидит сборка сцен
 function printOf(s, el) {
   const t = sceneT()
@@ -1914,8 +1927,9 @@ function printOf(s, el) {
     for (const k of [...styled]) if (k._origHTML != null && s.el.contains(k) && (k === el || !k.contains(el))) { k.innerHTML = k._origHTML; delete k._origHTML }
   }, () => {
     if (!el.isConnected) return
-    const sig = sigOf(el), g = twins(s, sig), p = el.parentElement
-    fp = { sig, n: g.length, rank: Math.max(0, g.indexOf(el)), t, parent: p === s.el ? '' : pathIn(s.el, p), idx: [...p.children].indexOf(el) + 1 }
+    const sig = sigOf(el), look = lookOf(el), g = twins(s, sig), same = g.filter(k => lookOf(k) === look), p = el.parentElement
+    fp = { sig, look, n: g.length, rank: Math.max(0, g.indexOf(el)), ln: same.length, lr: Math.max(0, same.indexOf(el)), t,
+           parent: p === s.el ? '' : pathIn(s.el, p), idx: [...p.children].indexOf(el) + 1 }
   })
   render()
   return fp
@@ -2224,7 +2238,7 @@ function settleEdits() {
   try {
     for (const r of Object.values(recs)) r.lost = !scenes.some(s => s.name === r.scene)
     for (const s of scenes) {
-      done += settleDels(s)
+      done += placeRecs(s)
       const items = recsOf(s).filter(live).map(r => ({ r, el: elOf(s, r), best: '', at: null }))
       if (!items.length) continue
       const times = steps(s, 24), moments = [...new Set(items.map(it => it.r.t))]
@@ -2256,48 +2270,68 @@ function settleEdits() {
   saveRecs()
   return done
 }
-// Убранные объекты. ИИ удалил объект, если таких же в сцене в тот же момент стало меньше.
-// Если нет, объект ищется среди двойников по порядку: адрес мог съехать, а двойник рядом не тот
-function settleDels(s) {
-  const dels = recsOf(s).filter(r => r.del && r.fp)
-  if (!dels.length) return 0
-  const found = new Map()
-  sampleScene(s, [...new Set(dels.map(r => r.fp.t))], null, t => {
-    for (const r of dels) if (!found.has(r) && Math.abs(t - r.fp.t) < 1e-9) found.set(r, twins(s, r.fp.sig))
+// Где теперь объекты правок, после того как ИИ поменял сцену. Убранный объект ИИ удалил, если таких же
+// по устройству, тексту и виду в тот же момент сцены стало меньше. Остальные правки находят свой объект
+// среди двойников по порядку: адрес по номеру съезжает, когда ИИ добавил или убрал соседа
+function placeRecs(s) {
+  const all = recsOf(s)
+  if (!all.length) return 0
+  const q = path => { try { return s.el.querySelector(':scope > ' + path) } catch (e) { return null } }
+  const pick = (list, el, n, rank) => list.length === n ? list[rank] : list.includes(el) ? el : list[Math.min(rank, list.length - 1)]
+  const dels = all.filter(r => r.del && r.fp), gone = [], found = new Map()
+  // Всё меряется в тот момент сцены, в который сняли отпечаток: текст и вид меняются по ходу сцены
+  if (dels.length) sampleScene(s, [...new Set(dels.map(r => r.fp.t))], null, t => {
+    for (const r of dels) {
+      const fp = r.fp
+      if (found.has(r) || gone.includes(r) || Math.abs(t - fp.t) > 1e-9) continue
+      const g = twins(s, fp.sig), same = g.filter(k => lookOf(k) === fp.look)
+      if (g.length < fp.n && same.length < fp.ln) { gone.push(r); continue }
+      const el = same.length ? pick(same, q(r.path), fp.ln, fp.lr) : pick(g, q(r.path), fp.n, fp.rank)
+      const look = lookOf(el), sm = g.filter(k => lookOf(k) === look), p = el.parentElement
+      Object.assign(fp, { look, n: g.length, rank: g.indexOf(el), ln: sm.length, lr: sm.indexOf(el),
+        parent: p === s.el ? '' : pathIn(s.el, p), idx: [...p.children].indexOf(el) + 1 })
+      found.set(r, el)
+    }
   })
-  const gone = [], moves = []
-  for (const r of dels) {
-    const g = found.get(r) || []
-    if (g.length < r.fp.n) { gone.push(r); delete recs[r.key]; continue }
-    let el = null
-    try { el = s.el.querySelector(':scope > ' + r.path) } catch (e) { /* адрес не разобрался, найдём по порядку */ }
-    if (g.length === r.fp.n || !g.includes(el)) el = g[Math.min(r.fp.rank, g.length - 1)]
-    const p = el.parentElement
-    moves.push([r, pathIn(s.el, el), el])
-    Object.assign(r.fp, { rank: g.indexOf(el), n: g.length, parent: p === s.el ? '' : pathIn(s.el, p), idx: [...p.children].indexOf(el) + 1 })
-  }
-  rekey(s, moves.filter(([r, path]) => path !== r.path))
-  for (const [r, , el] of moves) elCache.set(r.key, el)
-  return gone.length + (gone.length ? shiftPaths(s, gone) : 0)
-}
-// После удаления объекта соседи за ним стоят в родителе на номер раньше, а правки того, что было внутри, ушли вместе с ним
-function shiftPaths(s, gone) {
-  let done = 0
-  const moves = []
-  for (const r of recsOf(s)) {
-    if (gone.some(g => r.path.startsWith(g.path + ' > '))) { delete recs[r.key]; done++; continue }
-    const segs = r.path.split(' > ')
-    const path = segs.map((seg, i) => {
+  // Удалённый объект ушёл вместе со всем, что внутри. Соседи за ним стоят в родителе на номер раньше
+  const shift = path => {
+    const segs = path.split(' > ')
+    return segs.map((seg, i) => {
       const m = seg.match(/^(.*):nth-child\((\d+)\)$/)
       if (!m) return seg
-      const parent = segs.slice(0, i).join(' > '), j = +m[2]
-      const k = gone.filter(g => g.fp.parent === parent && g.fp.idx < j).length
+      const parent = segs.slice(0, i).join(' > '), j = +m[2], k = gone.filter(g => g.fp.parent === parent && g.fp.idx < j).length
       return k ? `${m[1]}:nth-child(${j - k})` : seg
     }).join(' > ')
-    if (path !== r.path) moves.push([r, path])
+  }
+  const drop = new Set(gone), hint = new Map()
+  for (const r of all) {
+    if (drop.has(r) || found.has(r)) continue
+    if (gone.some(g => r.path.startsWith(g.path + ' > '))) drop.add(r)
+    else hint.set(r, gone.length ? shift(r.path) : r.path)
+  }
+  // Остальные правки: отпечаток без текста, ведь текст ИИ мог уже поправить. Адрес подсказывает, какой из двойников
+  const rest = [...hint.keys()].filter(r => r.twin)
+  if (rest.length) sampleScene(s, [...new Set(rest.map(r => r.twin.t))], null, t => {
+    for (const r of rest) {
+      const w = r.twin
+      if (found.has(r) || Math.abs(t - w.t) > 1e-9) continue
+      const g = twins(s, w.shape, false).filter(k => lookOf(k) === w.look)
+      if (!g.length) { found.set(r, null); continue }      // объект стал другим, остаётся адрес
+      const el = pick(g, q(hint.get(r)), w.n, w.rank)
+      Object.assign(w, { n: g.length, rank: g.indexOf(el) })
+      found.set(r, el)
+    }
+  })
+  for (const r of drop) delete recs[r.key]
+  const moves = []
+  for (const r of all) {
+    if (drop.has(r)) continue
+    const el = found.get(r), path = el ? pathIn(s.el, el) : hint.get(r) || r.path
+    if (path !== r.path) moves.push([r, path, el])
+    else if (el) elCache.set(r.key, el)
   }
   rekey(s, moves)
-  return done
+  return drop.size
 }
 // Сцены пересобраны: старые элементы больше не на экране
 function forgetFrame() {

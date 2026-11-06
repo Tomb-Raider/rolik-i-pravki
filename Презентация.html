@@ -35,7 +35,7 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
   });
 })();
 </script>
-<link rel="stylesheet" href="site.css?v=202611061335">
+<link rel="stylesheet" href="site.css?v=202611061344">
 </head>
 <body>
 <div class="site">
@@ -95,21 +95,24 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
         <div class="bmk">
           <div class="bmk-grab">
             <a class="bm" href="javascript:(function(){if(window.__pravki)return;var d=0,f=function(){if(d||window.__pravki)return;d=1;alert('Этот сайт не пускает режим правок. Если у\u00a0вас есть файлы сайта, откройте их на сайте пакета')};try{var s=document.createElement('script');s.src='https://tomb-raider.github.io/rezhim-pravok/pravki.js?v='+Date.now();s.setAttribute('data-auto','1');s.onerror=f;document.documentElement.appendChild(s)}catch(e){f()}setTimeout(f,15000)})()"><svg class="grip" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="14" r="1.5"/></svg>Режим правок</a>
-            <p>Эту кнопку перетащите наверх, на&nbsp;панель закладок</p>
+            <p class="how" data-bm="how">Эту кнопку перетащите наверх, на&nbsp;панель закладок</p>
+            <button class="link" data-bm="copylink" hidden>Скопировать ссылку на&nbsp;страницу</button>
           </div>
           <div class="bmk-demo" aria-hidden="true">
             <div class="br">
               <div class="br-top"><i></i><i></i><i></i><span class="br-url"></span></div>
-              <div class="br-bar"><span class="br-fake"></span><span class="br-fake"></span><span class="br-slot">Режим правок</span><span class="br-cap">Панель закладок</span></div>
+              <div class="br-bar"><span class="br-fake"></span><span class="br-fake"></span><span class="br-slot">Режим правок</span><span class="br-cap" data-bm="cap">Панель закладок</span></div>
               <div class="br-page"><i class="br-line"></i><i class="br-line short"></i><span class="br-btn">Режим правок</span></div>
             </div>
             <svg class="bmk-arrow"><path class="line"/><path class="head"/></svg>
           </div>
         </div>
+        <!-- Сайт сам узнаёт браузер (site.js), тут можно выбрать другой -->
+        <p class="brw" data-bm="other" hidden></p>
         <p class="note">Закладка включает режим правок прямо на открытом сайте, даже если его файлов у&nbsp;вас нет. Сайт не меняется, правки видите только вы</p>
       </div>
       <ol class="steps side">
-        <li><span class="n">1</span><div><h3>Добавьте закладку</h3><p>Перетащите кнопку «Режим правок» на&nbsp;панель закладок. Если панели не видно, Cmd + Shift + B на&nbsp;Mac или Ctrl + Shift + B на&nbsp;Windows</p></div></li>
+        <li><span class="n">1</span><div><h3>Добавьте закладку</h3><p data-bm="step">Перетащите кнопку «Режим правок» на&nbsp;панель закладок. Если панели не видно, Cmd + Shift + B на&nbsp;Mac или Ctrl + Shift + B на&nbsp;Windows</p></div></li>
         <li><span class="n">2</span><div><h3>Откройте сайт и&nbsp;нажмите закладку</h3><p>Внизу появится панель режима правок</p></div></li>
         <li><span class="n">3</span><div><h3>Отдайте правки</h3><p>«Скопировать правки» соберёт всё одним текстом. Отправьте его тому, кто делает сайт, или ИИ вместе с&nbsp;файлами сайта</p></div></li>
       </ol>
@@ -137,8 +140,8 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
 <input type="file" id="dirIn" webkitdirectory hidden>
 <input type="file" id="fileIn" accept=".html,.htm" multiple hidden>
 <div id="drop">Отпустите, чтобы открыть</div>
-<div id="toTop" aria-hidden="true"><svg viewBox="0 0 26 34"><path d="M13 32V3M3 13L13 3l10 10"/></svg>Отпустите на&nbsp;панели закладок, она над&nbsp;страницей</div>
-<script src="site.js?v=202611061335"></script>
-<script src="open.js?v=202611061335"></script>
+<div id="toTop" aria-hidden="true"><svg viewBox="0 0 26 34"><path d="M13 32V3M3 13L13 3l10 10"/></svg><span data-bm="drop">Отпустите на&nbsp;панели закладок, она над&nbsp;страницей</span></div>
+<script src="site.js?v=202611061344"></script>
+<script src="open.js?v=202611061344"></script>
 </body>
 </html>
