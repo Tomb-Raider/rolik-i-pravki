@@ -35,7 +35,7 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
   });
 })();
 </script>
-<link rel="stylesheet" href="site.css?v=202611060203">
+<link rel="stylesheet" href="site.css?v=202611060422">
 </head>
 <body>
 <div class="site">
@@ -63,7 +63,9 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
       <ol class="steps side">
         <li><span class="n">1</span><div><h3>Откройте</h3><p>Страница откроется здесь же, уже в&nbsp;режиме правок</p></div></li>
         <li><span class="n">2</span><div><h3>Правьте</h3><p>Тяните блоки мышью, текст правится двойным щелчком, Alt + щелчок оставляет замечание</p></div></li>
-        <li><span class="n">3</span><div><h3>Сохраните</h3><p><b>Скачать</b> отдаст готовый файл с&nbsp;вашими правками, ИИ не нужен</p><p class="or">Если есть замечания словами или правка сложная, <b>Отдать ИИ</b> соберёт всё в&nbsp;одно сообщение для чата. Ответ ИИ вставьте кнопкой <b>Вставить ответ ИИ</b></p></div></li>
+        <li><span class="n">3</span><div><h3>Сохраните</h3><p><b>Скачать с&nbsp;правками</b> отдаст готовый файл с&nbsp;вашими правками, ИИ не нужен</p>
+          <p class="or">Если есть замечания словами или правка сложная, отдайте всё ИИ в&nbsp;чат. Первым сообщением отправьте инструкцию, вторым правки кнопкой <b>Скопировать&nbsp;правки</b> и&nbsp;файлы страниц со&nbsp;стилями. ИИ пришлёт исправленные файлы</p>
+          <p class="or"><button class="link" data-copy="instr">Скопировать инструкцию для&nbsp;ИИ</button></p></div></li>
       </ol>
     </div>
   </section>
@@ -79,7 +81,7 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
       <ol class="steps side">
         <li><span class="n">1</span><div><h3>Отправьте фразу</h3><p>Агент скачает режим правок и&nbsp;откроет страницу в&nbsp;браузере. Нужен Python 3</p></div></li>
         <li><span class="n">2</span><div><h3>Правьте</h3><p>Так же, как онлайн: тяните, правьте текст, оставляйте замечания</p></div></li>
-        <li><span class="n">3</span><div><h3>Отдайте правки агенту</h3><p>«Скопировать правки» и&nbsp;вставьте в&nbsp;чат с&nbsp;агентом. Он сам внесёт их в&nbsp;файлы</p></div></li>
+        <li><span class="n">3</span><div><h3>Отдайте правки агенту</h3><p>Нажмите «Скопировать правки» и&nbsp;вставьте в&nbsp;чат с&nbsp;агентом. Он сам внесёт их в&nbsp;файлы</p></div></li>
       </ol>
     </div>
   </section>
@@ -90,7 +92,7 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
       <div>
         <div class="drop">
           <p class="big">Перетащите кнопку на&nbsp;панель закладок</p>
-          <a class="bm" href="javascript:(function(){if(window.__pravki)return;var s=document.createElement('script');s.src='https://tomb-raider.github.io/rezhim-pravok/pravki.js?v='+Date.now();s.setAttribute('data-auto','1');document.documentElement.appendChild(s);})()">Режим правок</a>
+          <a class="bm" href="javascript:(function(){if(window.__pravki)return;var d=0,f=function(){if(d||window.__pravki)return;d=1;alert('Этот сайт не пускает режим правок. Если у\u00a0вас есть файлы сайта, откройте их на сайте пакета')};try{var s=document.createElement('script');s.src='https://tomb-raider.github.io/rezhim-pravok/pravki.js?v='+Date.now();s.setAttribute('data-auto','1');s.onerror=f;document.documentElement.appendChild(s)}catch(e){f()}setTimeout(f,3000)})()">Режим правок</a>
         </div>
         <p class="note">Закладка включает режим правок прямо на открытом сайте, даже если его файлов у&nbsp;вас нет. Сайт не меняется, правки видите только вы</p>
       </div>
@@ -100,20 +102,20 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
         <li><span class="n">3</span><div><h3>Отдайте правки</h3><p>«Скопировать правки» соберёт всё одним текстом. Отправьте его тому, кто делает сайт, или ИИ вместе с&nbsp;файлами сайта</p></div></li>
       </ol>
     </div>
-    <p class="note">Некоторые большие сайты своей защитой не пускают закладку</p>
+    <p class="note">Некоторые большие сайты своей защитой не пускают закладку, тогда она скажет об&nbsp;этом</p>
   </section>
 
   <div class="foot">
-    <a href="#" data-toast="Ссылка на «Как пользоваться»">Как пользоваться</a>
-    <a href="#" data-toast="Здесь скачается архив с обоими пакетами">Скачать пакеты</a>
-    <a href="#" data-toast="Ссылка на репозиторий">GitHub</a>
+    <a href="https://github.com/Tomb-Raider/rezhim-pravok/blob/main/%D0%9A%D0%B0%D0%BA%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D1%8C%D1%81%D1%8F.md">Как пользоваться</a>
+    <a href="https://github.com/Tomb-Raider/rezhim-pravok/archive/refs/heads/main.zip">Скачать пакет</a>
+    <a href="https://github.com/Tomb-Raider/rezhim-pravok">GitHub</a>
     <span>Лицензия MIT</span>
   </div>
 </div>
 <input type="file" id="dirIn" webkitdirectory hidden>
 <input type="file" id="fileIn" accept=".html,.htm" multiple hidden>
 <div id="drop">Отпустите, чтобы открыть</div>
-<script src="site.js?v=202611060203"></script>
-<script src="open.js?v=202611060203"></script>
+<script src="site.js?v=202611060422"></script>
+<script src="open.js?v=202611060422"></script>
 </body>
 </html>

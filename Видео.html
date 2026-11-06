@@ -35,7 +35,7 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
   });
 })();
 </script>
-<link rel="stylesheet" href="site.css?v=202611060203">
+<link rel="stylesheet" href="site.css?v=202611060422">
 </head>
 <body>
 <div class="site">
@@ -54,8 +54,9 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
     <div class="paths"><button data-way-btn="new" class="on" aria-pressed="true">Новый ролик</button><button data-way-btn="have" aria-pressed="false">У&nbsp;меня уже есть ролик</button></div>
 
     <div data-way="new">
-      <div class="split">
-        <ol class="steps">
+      <!-- Справа была заглушка записи экрана. Её решение 06.11: вернём вместе с записью, тогда снова обернуть шаги в .split -->
+      <div>
+        <ol class="steps one">
           <li><span class="n">1</span><div>
             <h3>Опишите ролик</h3>
             <p>Впишите своё вместо текста в&nbsp;квадратных скобках, ненужные строки удалите</p>
@@ -75,15 +76,13 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
             <p class="msg" id="answerMsg" aria-live="polite"></p>
           </div></li>
         </ol>
-        <div class="side">
-          <div class="rec">Здесь будет запись экрана: как описать ролик, отправить в&nbsp;чат и&nbsp;вставить ответ</div>
-        </div>
       </div>
 
       <div class="after">
         <h3>Дальше в&nbsp;плеере</h3>
-        <p class="mute">Встаньте на нужную секунду и&nbsp;нажмите «Для ИИ», запрос с&nbsp;кодом сцены скопируется сам. Сдвиги и&nbsp;текст правятся прямо в&nbsp;кадре. Плеер помнит последний ролик в&nbsp;этом браузере, а&nbsp;«Сохранить» запишет его файлом к&nbsp;вам на компьютер</p>
-        <p class="mute">Стиль движения можно взять на странице <a href="#" data-toast="Ссылка на «Приёмы движения»">«Приёмы движения»</a></p>
+        <p class="mute">Встаньте на нужную секунду и&nbsp;нажмите «Для ИИ», запрос с&nbsp;кодом ролика скопируется сам. Сдвиги и&nbsp;текст правятся прямо в&nbsp;кадре</p>
+        <p class="mute">Плеер помнит последний ролик в&nbsp;этом браузере. «Сохранить» запишет ролик файлом к&nbsp;вам на компьютер, после этого плеер связан с&nbsp;файлом и&nbsp;дальше сам записывает в&nbsp;него изменения. Связь с&nbsp;файлом работает в&nbsp;Chrome, Яндекс Браузере и&nbsp;Edge</p>
+        <p class="mute">Стиль движения можно взять на странице <a href="https://tomb-raider.github.io/rolik-iz-html/%D0%9F%D1%80%D0%B8%D1%91%D0%BC%D1%8B%20%D0%B4%D0%B2%D0%B8%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F.html">«Приёмы движения»</a></p>
       </div>
     </div>
 
@@ -112,30 +111,30 @@ ym(114097970,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webv
     <div class="split">
       <div class="agent">
         <p class="mute">Для Claude Code, Codex, Cursor, GigaCode. Отправьте фразу агенту из&nbsp;папки, где будет лежать ролик</p>
-        <pre class="phrase">Собери ролик по пакету github.com/Tomb-Raider/rolik-iz-html и сделай всё по его «Инструкции для ИИ». Ролик положи в Ролик.html и открой его в браузере. О чём ролик, напишу следующим сообщением</pre>
+        <pre class="phrase">Собери ролик по пакету github.com/Tomb-Raider/rolik-iz-html. Скачай его через git clone и сделай всё по его «Инструкции для ИИ». Ролик положи в Ролик.html и открой его в браузере. О чём ролик, напишу следующим сообщением</pre>
         <button class="btn" data-copy>Скопировать фразу</button>
       </div>
       <ol class="steps side">
         <li><span class="n">1</span><div><h3>Отправьте фразу</h3><p>Агент скачает пакет и&nbsp;прочитает инструкцию</p></div></li>
-        <li><span class="n">2</span><div><h3>Опишите ролик</h3><p>Заполните шаблон на вкладке «Онлайн», скопируйте и&nbsp;отправьте агенту вторым сообщением</p></div></li>
+        <li><span class="n">2</span><div><h3>Опишите ролик</h3><p>Заполните шаблон на вкладке «Онлайн», нажмите «Скопировать&nbsp;для&nbsp;чата» и&nbsp;отправьте агенту вторым сообщением. Агенту подходит то&nbsp;же, что и&nbsp;чату</p></div></li>
         <li><span class="n">3</span><div><h3>Смотрите в&nbsp;плеере</h3><p>Агент соберёт Ролик.html и&nbsp;откроет его. Нажмите «Связать с&nbsp;файлом», и&nbsp;правки агента будут появляться сами</p></div></li>
       </ol>
     </div>
   </section>
 
   <div class="foot">
-    <a href="#" data-toast="Ссылка на «Приёмы движения»">Приёмы движения</a>
-    <a href="#" data-toast="Ссылка на «Как разобрать референс»">Как разобрать референс</a>
-    <a href="#" data-toast="Ссылка на «Если что-то не так»">Если что-то не так</a>
-    <a href="#" data-toast="Ссылка на «Как пользоваться»">Как пользоваться</a>
-    <a href="#" data-toast="Здесь скачается архив с обоими пакетами">Скачать пакеты</a>
-    <a href="#" data-toast="Ссылка на репозиторий">GitHub</a>
+    <a href="https://tomb-raider.github.io/rolik-iz-html/%D0%9F%D1%80%D0%B8%D1%91%D0%BC%D1%8B%20%D0%B4%D0%B2%D0%B8%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F.html">Приёмы движения</a>
+    <a href="https://tomb-raider.github.io/rolik-iz-html/%D0%9A%D0%B0%D0%BA%20%D1%80%D0%B0%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D1%82%D1%8C%20%D1%80%D0%B5%D1%84%D0%B5%D1%80%D0%B5%D0%BD%D1%81.html">Как разобрать референс</a>
+    <a href="https://tomb-raider.github.io/rolik-iz-html/%D0%95%D1%81%D0%BB%D0%B8%20%D1%87%D1%82%D0%BE-%D1%82%D0%BE%20%D0%BD%D0%B5%20%D1%82%D0%B0%D0%BA.html">Если что-то не так</a>
+    <a href="https://github.com/Tomb-Raider/rolik-iz-html/blob/main/%D0%9A%D0%B0%D0%BA%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D1%8C%D1%81%D1%8F.md">Как пользоваться</a>
+    <a href="https://github.com/Tomb-Raider/rolik-iz-html/archive/refs/heads/main.zip">Скачать пакет</a>
+    <a href="https://github.com/Tomb-Raider/rolik-iz-html">GitHub</a>
     <span>Лицензия MIT</span>
   </div>
 </div>
 <input type="file" id="reelIn" accept=".html,.htm,image/*,font/*,.woff,.woff2,.ttf,.otf" multiple hidden>
 <div id="drop">Отпустите, чтобы открыть ролик</div>
-<script src="site.js?v=202611060203"></script>
-<script src="reel.js?v=202611060203"></script>
+<script src="site.js?v=202611060422"></script>
+<script src="reel.js?v=202611060422"></script>
 </body>
 </html>

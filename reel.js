@@ -141,13 +141,42 @@ function reelCode(raw) {
 }
 const titleOf = code => (code.match(/\breel\s*\(\s*\{[\s\S]*?\btitle\s*:\s*(['"`])([^'"`\n]{1,80})\1/) || [])[2] || ''
 
+/* «Не сохранено». Плеер с сайта зажигает его сразу, если ролика нет в его списке reel-saved в памяти браузера:
+   там ключи кода роликов, уже записанных в файл. Ролик из «У меня уже есть ролик» файл уже имеет,
+   поэтому кладём в список ключ его кода. Ключ считаем так же, как плеер: splitChunks, codeOf и codeKey в Плеер.html.
+   Ролик из «Новый ролик» файла ещё не имеет, его не отмечаем, и «Не сохранено» горит сразу */
+const SAVED = 'reel-saved'
+function codeKeyOf(text) {
+  const list = []
+  let label = 'основа', buf = []
+  const push = () => { const code = buf.join('\n').replace(/^\s*\n/, '').replace(/\s+$/, ''); if (code.trim()) list.push({ label, code }) }
+  for (const line of String(text).replace(/\r\n?/g, '\n').split('\n')) {
+    const m = line.match(/^\/\/\/\/\s?(.*)$/)
+    if (m) { push(); label = m[1].trim() || 'код'; buf = [] } else buf.push(line)
+  }
+  push()
+  const code = list.length === 1 && list[0].label === 'основа' ? list[0].code : list.map(c => `//// ${c.label}\n${c.code}`).join('\n\n')
+  const s = code.replace(/\s+/g, ' ').trim()
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) }
+  return (h >>> 0).toString(36) + '.' + s.length
+}
+function markHasFile(text) {
+  const k = codeKeyOf(text)
+  let list = []
+  try { list = JSON.parse(mem.get(SAVED) || '[]') } catch (e) { /* список с нуля */ }
+  if (!Array.isArray(list)) list = []
+  mem.set(SAVED, JSON.stringify(list.filter(x => x !== k).concat(k).slice(-40)))
+}
+
 // Плеер сайта с кодом сцен внутри, следом reel-player.js: он ведёт обратно на сайт и помнит изменения
-async function openReel(code, name, extras = []) {
+async function openReel(code, name, extras = [], hasFile = false) {
   await ready
   const player = await fetch('Плеер.html', { cache: 'no-cache' }).then(r => r.ok ? r.text() : '')
   if (!SCENES.test(player)) throw new Error('нет плеера')
   const after = `\n<script src="${new URL('reel-player.js', location.href).href}"><\/script>\n`
-  let page = player.replace(SCENES, (_, a, b, c) => `${a}\n${code.replace(/<\/script/gi, '<\\/script')}\n${c}`)
+  const body = code.replace(/<\/script/gi, '<\\/script')
+  let page = player.replace(SCENES, (_, a, b, c) => `${a}\n${body}\n${c}`)
   const i = page.toLowerCase().lastIndexOf('</body')
   page = i < 0 ? page + after : page.slice(0, i) + after + page.slice(i)
   const cache = await caches.open('pravki-files')
@@ -157,6 +186,7 @@ async function openReel(code, name, extras = []) {
   }
   await cache.put(location.origin + canon(urlOf(name)), new Response(page, { headers: { 'content-type': 'text/html; charset=utf-8' } }))
   mem.set(LAST, name)
+  if (hasFile) markHasFile(body)
   location.href = urlOf(name)
 }
 
@@ -168,7 +198,7 @@ $('[data-play]').addEventListener('click', async () => {
   const code = reelCode(answer.value)
   if (!code.trim()) { sayNew('Вставьте ответ ИИ в&nbsp;поле выше'); answer.focus(); return }
   if (!HAS_REEL.test(code)) {
-    sayNew('В&nbsp;ответе нет кода ролика. Похоже, ИИ написал страницу целиком. Попросите его: «Перепиши по&nbsp;инструкции, только reel и&nbsp;scene в&nbsp;одном блоке»')
+    sayNew('В&nbsp;ответе нет кода ролика. Попросите ИИ прислать код ролика по&nbsp;инструкции одним блоком')
     return
   }
   if (!CAN) { sayNew(NO_SITE); return }
@@ -190,7 +220,8 @@ async function openFiles(entries) {
     const code = block ? block[2] : reelCode(text)
     if (!HAS_REEL.test(code)) continue
     sayHave(`Открываю «${esc(p.path.split('/').pop())}»…`)
-    try { await openReel(code.replace(/^\n/, '').replace(/\n$/, ''), safe(p.path.split('/').pop()) || 'Ролик.html', entries.filter(e => !isHTML(e.path))) }
+    // Файл, который сохранил плеер (в нём блок reel-scenes), уже хранит этот код. Страница от ИИ без блока ещё не файл ролика
+    try { await openReel(code.replace(/^\n/, '').replace(/\n$/, ''), safe(p.path.split('/').pop()) || 'Ролик.html', entries.filter(e => !isHTML(e.path)), !!block) }
     catch (e) { sayHave('Плеер не&nbsp;открылся. Обновите страницу и&nbsp;попробуйте ещё раз') }
     return
   }

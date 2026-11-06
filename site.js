@@ -1,4 +1,5 @@
-/* Макет: кнопки, которые на настоящем сайте что-то делают, здесь показывают подсказку, что будет */
+/* Общие кусочки сайта: всплывающая подсказка, пример ролика на главной, вкладки, копирование фразы агенту и инструкции.
+   Кнопки с data-toast остались только в макетах «Окно презентации» и «Окно ролика» */
 'use strict'
 const toastEl = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'toast' }))
 let toastTimer
@@ -92,6 +93,17 @@ addEventListener('hashchange', () => showPanel(location.hash.slice(1)))
 
 /* Шаблон ролика, «Скопировать для чата» и «Открыть в плеере» на странице «Видео» живут в reel.js */
 
+/* «Скопировать инструкцию для ИИ» на странице «Презентация». Инструкция режима правок лежит рядом ссылкой
+   на файл пакета, при выкладке копируется файлом. Берём её заранее: Safari копирует только сразу по нажатию.
+   Запасной путь через raw.githubusercontent.com, как на сайте пакета */
+let instrText = ''
+if (document.querySelector('[data-copy="instr"]')) {
+  const asText = r => r.ok ? r.text().then(t => /^\s*</.test(t) ? Promise.reject() : t) : Promise.reject()
+  const RAW = 'https://raw.githubusercontent.com/Tomb-Raider/rezhim-pravok/main/' + encodeURIComponent('Инструкция для ИИ.md')
+  fetch(encodeURIComponent('Инструкция для ИИ (правки).md')).then(asText).catch(() => fetch(RAW).then(asText))
+    .then(t => { instrText = t }).catch(() => {})
+}
+
 document.addEventListener('click', e => {
   const tab = e.target.closest('.tabs a')
   if (tab) { e.preventDefault(); history.replaceState(null, '', tab.hash); showPanel(tab.hash.slice(1)); return }
@@ -99,6 +111,7 @@ document.addEventListener('click', e => {
   if (!el) return
   e.preventDefault()
   const copy = (text, ok) => navigator.clipboard?.writeText(text).then(() => toast(ok), () => toast('Браузер не дал скопировать'))
+  if (el.dataset.copy === 'instr') return instrText ? copy(instrText, 'Инструкция скопирована. Отправьте её в\u00a0чат первым сообщением') : toast('Инструкция ещё не загрузилась. Попробуйте через пару секунд')
   if (el.dataset.copy !== undefined) return copy(el.closest('.agent').querySelector('pre').textContent, 'Фраза скопирована')
   toast(el.dataset.toast)
 })

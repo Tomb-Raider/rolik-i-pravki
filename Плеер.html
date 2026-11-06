@@ -46,7 +46,8 @@ body {
 .p-title b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
 .p-title span { color: var(--ui-mute); }
 .p-actions { grid-area: actions; display: flex; align-items: center; justify-content: flex-end; gap: 2px; padding: 0 10px; }
-.p-status { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); padding: 8px 14px; border-radius: 8px; background: var(--ui-fg); color: var(--ui-bg); pointer-events: none; opacity: 0; z-index: 20; }
+/* Всплывающая строка стоит внизу кадра, над временем и шагом, чтобы их не закрывать. Высоту считает placeSay() */
+.p-status { position: fixed; left: 50%; bottom: var(--say-bottom, 120px); transform: translateX(-50%); width: max-content; max-width: calc(100vw - 32px); padding: 8px 14px; border-radius: 8px; background: var(--ui-fg); color: var(--ui-bg); text-align: center; pointer-events: none; opacity: 0; z-index: 20; }
 .p-status.p-on { opacity: 1; }
 
 .p-view { grid-area: view; position: relative; min-height: 0; overflow: hidden; }
@@ -159,16 +160,16 @@ body.p-recording .p-view { cursor: none; }
 .p-editbar .p-eye { display: inline-flex; align-items: center; justify-content: center; }
 .p-editbar .p-hints { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-left: 14px; color: var(--ui-mute); font-size: 12px; }
 
-/* Телефон: сверху название, под ним кнопки в одну строку с прокруткой, кадр, время, шаг и скорость, таймлайн.
+/* Телефон: сверху название, под ним кнопки, кадр, время, шаг и скорость, таймлайн.
+   Кнопки, которым не хватило ширины, переносятся на вторую строку, чтобы все были видны.
    Подсказок клавиш нет, на телефоне клавиш нет */
 @media (max-width: 640px) {
   .p-app {
     grid-template-columns: 1fr;
-    grid-template-rows: 40px 40px 1fr 44px 44px 70px auto;
+    grid-template-rows: 40px auto 1fr 44px auto 70px auto;
     grid-template-areas: "title" "actions" "view" "transport" "modes" "timeline" "keys";
   }
-  .p-actions, .p-modes { justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
-  .p-actions::-webkit-scrollbar, .p-modes::-webkit-scrollbar { display: none; }
+  .p-actions, .p-modes { justify-content: flex-start; flex-wrap: wrap; height: auto; min-height: 40px; padding: 2px 10px; }
   .p-actions > *, .p-modes > * { flex: none; }
   .p-sep { width: 8px; }
   .p-keys { display: none; }
@@ -181,7 +182,7 @@ body.p-recording .p-view { cursor: none; }
 
 <!--
   СЦЕНЫ РОЛИКА. Код сцен пишется в блоке ниже, по договору из «Инструкция для ИИ.md».
-  Отметки «//// ...» делят код на части, каждая часть выполняется отдельно.
+  Отметки «//// ...» делят код на части. Части выполняются по порядку, каждая видит функции и константы из частей выше.
   Код плеера ниже этого блока править не нужно.
 -->
 <script type="text/plain" id="reel-scenes">
@@ -389,7 +390,7 @@ scene({
     <h2>Для ИИ</h2>
     <p class="p-where"></p>
     <textarea class="p-what" spellcheck="true" placeholder="Что поправить. Например, слово появляется раньше, чем нужно"></textarea>
-    <label class="p-check"><input type="checkbox" class="p-withcode">Добавить код сцены, это нужно для обычного чата</label>
+    <label class="p-check"><input type="checkbox" class="p-withcode">Добавить код ролика, это нужно для обычного чата</label>
     <pre></pre>
     <p class="p-msg"></p>
     <div class="p-row">
@@ -510,58 +511,86 @@ function hint(msg) {
   return ''
 }
 
+// Перед кодом части в new Function три строки: заголовок функции и with с общими объявлениями
+const HEAD = 3
 function lineOf(err) {
   const m = String(err && err.stack || '').match(/reel-chunk-\d+\.js:(\d+):\d+/)
-  return m ? Math.max(1, +m[1] - 2) : 0
+  return m ? Math.max(1, +m[1] - HEAD) : 0
+}
+// Откуда вызвали scene() или reel(): часть и место в её коде. Берём самый внешний вызов из кода частей
+function callSite() {
+  const re = /reel-chunk-(\d+)\.js:(\d+):(\d+)/g, st = String(new Error().stack || '')
+  let m, last = null
+  while ((m = re.exec(st))) last = m
+  return last ? { part: +last[1], line: +last[2] - HEAD, col: +last[3] } : null
 }
 
+// Части выполняются по порядку. Объявления верхнего уровня (функции, константы) из частей выше
+// видны в частях ниже: так вставленная сцена пользуется phraseAt и PHRASE_CSS из начала ролика.
+// Своё объявление части с тем же именем важнее
+const OWN = new Set(['scene', 'reel', 'R', '__reel_env', '__reel_out'])
 function build(list) {
   const o = { title: 'Ролик', fps: 30, width: 1920, height: 1080, css: [], lengths: {}, grid: 0 }
-  const byName = new Map(), order = [], per = []
-  list.forEach((ch, ci) => {
-    const names = [], seen = new Set()
-    let hasReel = false
-    const scene = def => {
-      if (!def || typeof def !== 'object') throw new Error('scene() ждёт объект: scene({ name, dur, html, css, draw })')
-      let name = String(def.name == null ? '' : def.name).trim() || `Сцена ${order.length + 1}`
-      if (seen.has(name)) { let k = 2; while (seen.has(`${name} ${k}`)) k++; name = `${name} ${k}` }
-      seen.add(name)
-      const dur = Number(def.dur)
-      if (!(dur > 0)) throw new Error(`У${NB}сцены «${name}» нет длительности. Нужно dur: число секунд`)
-      if (def.draw != null && typeof def.draw !== 'function') throw new Error(`У${NB}сцены «${name}» draw должна быть функцией`)
-      const s = { name, dur, html: def.html == null ? '' : String(def.html), css: def.css == null ? '' : String(def.css),
-                  draw: def.draw || null, note: def.note == null ? '' : String(def.note), chunk: ci, src: ch }
-      if (!byName.has(name)) order.push(name)
-      byName.set(name, s)
-      names.push(name)
-      return s
-    }
-    const reel = (r = {}) => {
-      hasReel = true
-      if (r.title != null) o.title = String(r.title)
-      if (+r.fps > 0) o.fps = +r.fps
-      if (+r.width > 0) o.width = +r.width
-      if (+r.height > 0) o.height = +r.height
-      if (r.css) o.css.push(String(r.css))
-      if (+r.grid > 0) o.grid = +r.grid
-      if (r.lengths && typeof r.lengths === 'object') Object.assign(o.lengths, r.lengths)
-    }
-    let fn
-    try {
-      fn = new Function('scene', 'reel', 'R', ch.code + `\n//# sourceURL=reel-chunk-${ci}.js`)
-    } catch (e) {
-      throw new Error(`В${NB}коде ошибка записи: ${e.message}. Проверьте, что код скопирован целиком, до последней скобки`)
-    }
-    try { fn(scene, reel, R) } catch (e) {
-      const ln = lineOf(e)
-      throw new Error(`${e.message}${ln ? ` (строка ${ln})` : ''}${hint(e.message)}`)
-    }
-    per.push({ names, hasReel })
-  })
+  const byName = new Map(), order = [], at = [], shared = new Map()
+  const per = list.map(() => ({ names: [], hasReel: false, seen: new Set() }))
+  const ownerOf = (pos, ci) => pos && pos.part < list.length ? pos.part : ci
+  const limit = Error.stackTraceLimit
+  Error.stackTraceLimit = 100
+  try {
+    list.forEach((ch, ci) => {
+      const scene = def => {
+        if (!def || typeof def !== 'object') throw new Error('scene() ждёт объект: scene({ name, dur, html, css, draw })')
+        const pos = callSite(), own = ownerOf(pos, ci), p = per[own]
+        let name = String(def.name == null ? '' : def.name).trim() || `Сцена ${order.length + 1}`
+        if (p.seen.has(name)) { let k = 2; while (p.seen.has(`${name} ${k}`)) k++; name = `${name} ${k}` }
+        p.seen.add(name)
+        const dur = Number(def.dur)
+        if (!(dur > 0)) throw new Error(`У${NB}сцены «${name}» нет длительности. Нужно dur: число секунд`)
+        if (def.draw != null && typeof def.draw !== 'function') throw new Error(`У${NB}сцены «${name}» draw должна быть функцией`)
+        const s = { name, dur, html: def.html == null ? '' : String(def.html), css: def.css == null ? '' : String(def.css),
+                    draw: def.draw || null, note: def.note == null ? '' : String(def.note), chunk: own, src: list[own] }
+        if (!byName.has(name)) order.push(name)
+        byName.set(name, s)
+        p.names.push(name)
+        at.push({ kind: 'scene', name, part: own, pos })
+        return s
+      }
+      const reel = (r = {}) => {
+        const pos = callSite(), own = ownerOf(pos, ci)
+        per[own].hasReel = true
+        at.push({ kind: 'reel', keys: r && typeof r === 'object' ? Object.keys(r) : [], part: own, pos })
+        if (r.title != null) o.title = String(r.title)
+        if (+r.fps > 0) o.fps = +r.fps
+        if (+r.width > 0) o.width = +r.width
+        if (+r.height > 0) o.height = +r.height
+        if (r.css) o.css.push(String(r.css))
+        if (+r.grid > 0) o.grid = +r.grid
+        if (r.lengths && typeof r.lengths === 'object') Object.assign(o.lengths, r.lengths)
+      }
+      // Общие объявления из частей выше приходят через with, свои объявления части уходят следующим частям
+      const mine = topNames(ch.code).filter(k => !OWN.has(k))
+      const env = Object.create(null)
+      for (const [k, get] of shared) if (!mine.includes(k)) Object.defineProperty(env, k, { get, enumerable: true })
+      const tail = `\n;__reel_out({ ${mine.map(k => `${JSON.stringify(k)}: () => ${k}`).join(', ')} })\n}`
+      let fn
+      try {
+        fn = new Function('scene', 'reel', 'R', '__reel_env', '__reel_out', `with (__reel_env) {\n${ch.code}${tail}\n//# sourceURL=reel-chunk-${ci}.js`)
+      } catch (e) {
+        throw new Error(`В${NB}коде ошибка записи: ${e.message}. Проверьте, что код скопирован целиком, до${NB}последней скобки, или${NB}отправьте этот текст ИИ`)
+      }
+      const keep = got => {
+        for (const k in got) { try { got[k](); shared.set(k, got[k]) } catch (e) { /* имя не объявлено, делиться нечем */ } }
+      }
+      try { fn(scene, reel, R, env, keep) } catch (e) {
+        const ln = lineOf(e)
+        throw new Error(`${e.message}${ln ? ` (строка ${ln})` : ''}${hint(e.message)}`)
+      }
+    })
+  } finally { Error.stackTraceLimit = limit }
   // len это длина сцены в ролике. Если её поменяли в плеере, анимация сцены растягивается под неё
   const out = order.map(n => byName.get(n))
   for (const s of out) s.len = +o.lengths[s.name] > 0 ? +o.lengths[s.name] : s.dur
-  return { opts: o, scenes: out, per }
+  return { opts: o, scenes: out, per, at }
 }
 
 // Убрать части, все сцены которых заменены позже
@@ -571,6 +600,321 @@ function prune(list, res) {
     if (ci === list.length - 1 || p.hasReel || !p.names.length) return true
     return p.names.some(n => res.scenes.find(s => s.name === n).chunk === ci)
   })
+}
+
+// ---------- Код части по операторам верхнего уровня ----------
+// Нужно, чтобы знать, какие имена объявляет часть, и ставить вставленную сцену на место старой.
+// Это не полный разбор JavaScript: строки, шаблоны, комментарии, регулярные выражения и скобки он понимает, остальное ему не нужно
+const ID0 = /[A-Za-z_$\u0080-￿]/, ID1 = /[\w$\u0080-￿]/
+const RX_AFTER = new Set(['return', 'typeof', 'instanceof', 'in', 'of', 'new', 'delete', 'void', 'throw', 'case', 'do', 'else', 'yield', 'await'])
+const OPS = ['>>>=', '...', '===', '!==', '**=', '<<=', '>>=', '>>>', '&&=', '||=', '??=', '=>', '==', '!=', '<=', '>=', '&&', '||', '??', '?.',
+             '++', '--', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**', '<<', '>>']
+// Слова: t тип (id имя, n число, s строка или шаблон, p знак), v текст, s и e границы, d глубина скобок снаружи,
+// nl перед ним перенос строки, sub слова внутри ${} шаблона
+function lex(code) {
+  const n = code.length
+  const run = (i, inner) => {
+    const toks = []
+    let depth = 0, nl = false
+    while (i < n) {
+      const c = code[i], c2 = code[i + 1]
+      if (c === '\n') { nl = true; i++; continue }
+      if (/\s/.test(c)) { i++; continue }
+      if (c === '/' && c2 === '/') { while (i < n && code[i] !== '\n') i++; continue }
+      if (c === '/' && c2 === '*') {
+        const e = code.indexOf('*/', i + 2), j = e < 0 ? n : e + 2
+        if (code.slice(i, j).includes('\n')) nl = true
+        i = j
+        continue
+      }
+      const s = i, prev = toks[toks.length - 1]
+      let t = 'p', sub = null
+      if (c === '"' || c === "'") {
+        for (i++; i < n && code[i] !== c && code[i] !== '\n'; i++) if (code[i] === '\\') i++
+        i++
+        t = 's'
+      } else if (c === '`') {
+        sub = []
+        for (i++; i < n && code[i] !== '`';) {
+          if (code[i] === '\\') i += 2
+          else if (code[i] === '$' && code[i + 1] === '{') { const r = run(i + 2, true); sub.push(...r.toks); i = r.end }
+          else i++
+        }
+        i++
+        t = 's'
+      } else if (c === '/' && (!prev || (prev.t === 'p' ? prev.v !== ')' && prev.v !== ']' : prev.t === 'id' && RX_AFTER.has(prev.v)))) {
+        let cls = false
+        for (i++; i < n && code[i] !== '\n'; i++) {
+          if (code[i] === '\\') i++
+          else if (code[i] === '[') cls = true
+          else if (code[i] === ']') cls = false
+          else if (code[i] === '/' && !cls) break
+        }
+        for (i++; i < n && ID1.test(code[i]); i++);
+        t = 's'
+      } else if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(c2))) {
+        for (i++; i < n && /[\w.]/.test(code[i]); i++);
+        t = 'n'
+      } else if (ID0.test(c)) {
+        for (i++; i < n && ID1.test(code[i]); i++);
+        t = 'id'
+      } else if (c === '(' || c === '[' || c === '{') {
+        toks.push({ t, v: c, s, e: i + 1, d: depth++, nl })
+        nl = false
+        i++
+        continue
+      } else if (c === ')' || c === ']' || c === '}') {
+        if (inner && depth === 0) return { toks, end: i + 1 }
+        depth = Math.max(0, depth - 1)
+        i++
+      } else i += (OPS.find(x => code.startsWith(x, i)) || c).length
+      toks.push({ t, v: code.slice(s, i), s, e: Math.min(i, n), d: depth, nl, sub })
+      nl = false
+    }
+    return { toks, end: n }
+  }
+  return run(0, false).toks
+}
+
+// Операторы верхнего уровня. Конец оператора: точка с запятой, тело функции или класса,
+// перенос строки там, где JavaScript сам ставит точку с запятой
+const NO_END = new Set(['const', 'let', 'var', 'function', 'class', 'new', 'typeof', 'instanceof', 'in', 'of', 'else', 'do', 'void', 'delete', 'await', 'yield', 'extends', 'case', 'async'])
+const GOES_ON = new Set(['else', 'catch', 'finally', 'in', 'of', 'instanceof', 'extends'])
+const canEnd = p => p.t === 'id' ? !NO_END.has(p.v) : p.t !== 'p' || /^([)\]}]|\+\+|--)$/.test(p.v)
+const goesOn = q => q.t === 'id' ? GOES_ON.has(q.v) : q.t === 'p' && !/^([([{!~;]|\+\+|--|\.\.\.)$/.test(q.v)
+function statements(code) {
+  const toks = lex(code), out = []
+  for (let i = 0; i < toks.length;) {
+    const k = toks[i]
+    if (k.t === 'p' && k.v === ';') { i++; continue }
+    let j = i + 1
+    if (k.t === 'id' && (k.v === 'function' || k.v === 'class' || (k.v === 'async' && toks[j] && toks[j].v === 'function'))) {
+      while (j < toks.length && !(toks[j].v === '{' && toks[j].d === 0)) j++
+      for (j++; j < toks.length && !(toks[j].v === '}' && toks[j].d === 0); j++);
+      if (toks[j + 1] && toks[j + 1].v === ';' && !toks[j + 1].nl) j++
+    } else {
+      for (; j < toks.length; j++) {
+        const q = toks[j]
+        if (q.d !== 0) continue
+        if (q.t === 'p' && q.v === ';') break
+        if (q.nl && canEnd(toks[j - 1]) && !goesOn(q)) { j--; break }
+      }
+    }
+    j = Math.min(j, toks.length - 1)
+    out.push({ s: k.s, e: toks[j].e, toks: toks.slice(i, j + 1) })
+    i = j + 1
+  }
+  return out
+}
+
+// Имена, которые объявляет оператор: const, let, var, function, class
+function declNames(t) {
+  const k = t[0], names = []
+  if (!k || k.t !== 'id') return names
+  if (k.v === 'function' || k.v === 'class' || (k.v === 'async' && t[1] && t[1].v === 'function')) {
+    let j = k.v === 'async' ? 2 : 1
+    if (t[j] && t[j].v === '*') j++
+    if (t[j] && t[j].t === 'id') names.push(t[j].v)
+    return names
+  }
+  if (k.v !== 'const' && k.v !== 'let' && k.v !== 'var') return names
+  for (let j = 1; j < t.length;) {
+    j = bindNames(t, j, names)
+    while (j < t.length && !(t[j].d === 0 && t[j].v === ',')) j++
+    j++
+  }
+  return names
+}
+function closer(t, j) {
+  for (let i = j + 1; i < t.length; i++) if (t[i].d === t[j].d && /^[)\]}]$/.test(t[i].v)) return i
+  return t.length - 1
+}
+// Имена из привязки: x, { a, b: c, ...d } или [e, , f = 1]
+function bindNames(t, j, names) {
+  const q = t[j]
+  if (!q) return j
+  if (q.t === 'id') { names.push(q.v); return j + 1 }
+  if (q.v !== '{' && q.v !== '[') return j + 1
+  const end = closer(t, j), lvl = q.d + 1
+  let a = j + 1
+  for (let i = j + 1; i <= end; i++) {
+    if (i < end && !(t[i].d === lvl && t[i].v === ',')) continue
+    let b = a
+    if (q.v === '{') { const c = t.slice(a, i).findIndex(x => x.d === lvl && x.v === ':'); if (c >= 0) b = a + c + 1 }
+    if (t[b] && t[b].v === '...') b++
+    if (b < i) bindNames(t, b, names)
+    a = i + 1
+  }
+  return end + 1
+}
+
+// Оператор вместе с комментариями над ним и комментарием в конце его строки
+const ASSIGN = /^(?:[-+*/%&|^]|\*\*|<<|>>|>>>|&&|\|\||\?\?)?=$/
+function units(code) {
+  let from = 0
+  const list = statements(code).map(st => {
+    const e = st.e + code.slice(st.e).match(/^[ \t]*(\/\/[^\n]*)?/)[0].length, t = st.toks
+    const eq = t.findIndex(q => q.d === 0 && q.t === 'p' && ASSIGN.test(q.v))
+    const u = { from, e, names: declNames(t), first: t[0].t === 'id' ? t[0].v : '', refs: refsOf(t),
+                key: (eq > 0 ? t.slice(0, eq) : t).map(q => q.v).join(' ') }   // что меняет доделка: title.draw, anyAI.css
+    from = e
+    return u
+  })
+  return { list, tail: code.slice(from) }
+}
+// Какие имена упоминает код. Свойства после точки и ключи объекта { title: ... } не считаем, имена внутри ${} считаем
+const refsOf = t => t.flatMap((q, i) => {
+  if (q.sub) return refsOf(q.sub)
+  if (q.t !== 'id') return []
+  const a = t[i - 1], b = t[i + 1]
+  if (a && (a.v === '.' || a.v === '?.')) return []
+  if (b && b.v === ':' && a && (a.v === '{' || a.v === ',')) return []
+  return [q.v]
+})
+const namesCache = new Map()
+function topNames(code) {
+  if (!namesCache.has(code)) {
+    if (namesCache.size > 40) namesCache.clear()
+    let names
+    try { names = units(code).list.flatMap(u => u.names) } catch (e) { names = [] }
+    namesCache.set(code, names)
+  }
+  return namesCache.get(code)
+}
+
+// ---------- Вставленный код встаёт на место старого ----------
+// Сцена и объявление с тем же именем встают туда, где стояли старые, новое уходит в конец.
+// Так в файле каждая сцена один раз, а длительности из плеера остаются последней частью
+const norm = code => lex(code).map(t => t.v).join(' ')
+function offsetOf(code, line, col) {
+  let i = 0
+  for (let l = 1; l < line; l++) { i = code.indexOf('\n', i); if (i < 0) return -1; i++ }
+  return i + col - 1
+}
+// Часть b в часть a. null, если так склеить нельзя
+function foldTwo(a, b, flags) {
+  const res = build([{ label: 'a', code: a }, { label: 'b', code: b }])
+  const A = units(a), B = units(b), U = [A.list, B.list], codes = [a, b]
+  for (const x of res.at) {
+    if (!x.pos) return null
+    const off = offsetOf(codes[x.part], x.pos.line, x.pos.col)
+    const u = U[x.part].find(u => off >= u.from && off < u.e)
+    if (!u) return null
+    if (x.kind === 'scene') (u.scenes = u.scenes || []).push(x.name)
+    else (u.reels = u.reels || []).push(...x.keys)
+  }
+  const slots = A.list.map(u => ({ u, text: a.slice(u.from, u.e) }))
+  const live = () => slots.filter(o => o.text != null)
+  const textOf = v => b.slice(v.from, v.e).replace(/^\s*\n/, '')
+  const put = (o, v) => { o.text = (o.text.match(/^\s*\n/) || [''])[0] + textOf(v); o.v = v }
+  const glue = u => !u.names.length && !u.scenes && !u.reels
+  let land = Infinity
+  // Сцены на место старых
+  for (const v of B.list) {
+    if (!v.scenes) continue
+    if (v.names.length || v.reels) return null
+    const hit = live().filter(o => o.u.scenes && o.u.scenes.some(n => v.scenes.includes(n)))
+    if (hit.some(o => o.u.names.length || o.u.reels || o.u.scenes.some(n => !v.scenes.includes(n)))) return null
+    if (!hit.length) continue
+    put(hit[0], v)
+    hit.slice(1).forEach(o => { o.text = null })
+    land = Math.min(land, slots.indexOf(hit[0]))
+    v.done = true
+  }
+  // Объявления: такое же остаётся, другое встаёт на место старого
+  for (const v of B.list) {
+    if (v.done || !v.names.length) continue
+    if (v.reels) return null
+    const hit = live().filter(o => o.u.names.some(n => v.names.includes(n)))
+    if (hit.some(o => o.u.scenes || o.u.reels || o.u.names.some(n => !v.names.includes(n)))) return null
+    if (!hit.length) continue
+    if (norm(textOf(v)) !== norm(hit[0].text)) { put(hit[0], v); flags.decl = true } else hit[0].keep = true
+    hit.slice(1).forEach(o => { o.text = null })
+    v.done = true
+  }
+  // Старые доделки того, что часть b собирает заново: title.draw = ..., anyAI.css += ...
+  const declared = new Set(B.list.flatMap(v => v.names)), keys = new Set(B.list.filter(glue).map(v => v.key))
+  for (const o of live()) if (glue(o.u) && (declared.has(o.u.first) || keys.has(o.u.key))) o.text = null
+  // reel() с теми же ключами и новыми встаёт на место старого, иначе следом за ним
+  const before = [], after = [], nextToReel = []
+  for (const v of B.list) {
+    if (v.done) continue
+    if (v.reels && !v.scenes && !v.names.length) {
+      const old = live().filter(o => o.u.reels)
+      if (old.some(o => norm(o.text) === norm(textOf(v)))) { flags.reel = true; continue }   // такой reel() уже есть
+      if (old.length === 1 && !old[0].u.names.length && !old[0].u.scenes && old[0].u.reels.every(k => v.reels.includes(k))) { put(old[0], v); flags.reel = true }
+      else nextToReel.push(v)
+    } else (v.scenes || !isFinite(land) ? after : before).push(v)
+  }
+  // Объявления, которые были нужны только заменённым сценам (например, const title для старой сцены
+  // с доделкой title.draw), больше никому не нужны: убираем вместе с доделками. Неиспользуемое и раньше не трогаем
+  const reach = list => {
+    const by = new Map(), on = new Set(), todo = []
+    list.forEach((x, i) => x.u.names.forEach(n => by.set(n, i)))
+    const mark = i => {
+      if (on.has(i)) return
+      on.add(i)
+      todo.push(i)
+      list.forEach((y, j) => { if (glue(y.u) && list[i].u.names.includes(y.u.first)) mark(j) })
+    }
+    list.forEach((x, i) => { if (x.root || (!x.u.names.length && !(glue(x.u) && by.has(x.u.first)))) mark(i) })
+    while (todo.length) for (const r of list[todo.pop()].u.refs) if (by.has(r)) mark(by.get(r))
+    return on
+  }
+  const was = reach(slots.map(o => ({ u: o.u })))
+  const now = live().map(o => ({ u: o.v || o.u, root: !!(o.v || o.keep), o }))
+    .concat(before, after, nextToReel).map(x => x.u ? x : { u: x, root: true })
+  const keepNow = reach(now)
+  now.forEach((x, i) => { if (x.o && !x.root && !keepNow.has(i) && was.has(slots.indexOf(x.o))) x.o.text = null })
+  let reelAt = -1
+  slots.forEach((o, i) => { if (o.text != null && o.u.reels) reelAt = i })
+  const add = v => '\n\n' + textOf(v), pieces = reelAt < 0 ? nextToReel.map(add) : []
+  slots.forEach((o, i) => {
+    if (i === land) pieces.push(...before.map(add))
+    if (o.text != null) pieces.push(o.text)
+    if (i === reelAt) pieces.push(...nextToReel.map(add))
+  })
+  pieces.push(...after.map(add))
+  // Оператор с ( [ ` в начале строки JavaScript без точки с запятой приклеит к предыдущему, ставим её
+  const guard = p => p.replace(/^((?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*)([[(`])/, '$1;$2')
+  return pieces.map((p, i) => i ? guard(/^\s*\n/.test(p) ? p : '\n\n' + p) : p).join('').replace(/^\s*\n/, '') + A.tail
+}
+// Склеенный ролик тот же, что был бы из отдельных частей: сцены по порядку, их код и настройки.
+// Если вставили другое общее объявление, оно действует на весь ролик, как в одном файле.
+// Тогда html, css и длительности сцен могут стать другими, сверяем порядок сцен и их draw
+function sameReel(a, b, flags) {
+  if (a.scenes.length !== b.scenes.length) return false
+  const sig = s => JSON.stringify(flags.decl ? [s.name, String(s.draw)] : [s.name, s.dur, s.html, s.css, s.note, String(s.draw)])
+  if (a.scenes.some((s, i) => sig(s) !== sig(b.scenes[i]))) return false
+  const o = a.opts, p = b.opts
+  if (o.grid !== p.grid || JSON.stringify(o.lengths) !== JSON.stringify(p.lengths)) return false
+  if (flags.decl) return true
+  if (['title', 'fps', 'width', 'height'].some(k => o[k] !== p[k])) return false
+  return !!flags.reel || o.css.join('\n') === p.css.join('\n')
+}
+// Части base плюс вставленные части add. Возвращает части ролика, собранный ролик и сцены из add.
+// Если склеить в одну часть нельзя, вставленное остаётся отдельной частью перед длительностями
+function mergeParts(base, add) {
+  const isL = c => c.label === LENGTHS
+  const body = base.filter(c => !isL(c)), more = add.filter(c => !isL(c))
+  const lens = add.filter(isL).concat(base.filter(isL)).slice(0, 1)
+  const ref = body.concat(more, lens), refRes = build(ref)
+  const touched = refRes.per.slice(body.length, body.length + more.length).flatMap(p => p.names)
+  if (!more.length) return { list: ref, res: refRes, touched }
+  const flags = {}
+  let code = null
+  try {
+    code = body.concat(more).map(c => c.code).reduce((x, y) => x == null ? null : foldTwo(x, y, flags))
+  } catch (e) { code = null }
+  if (code != null) {
+    const list = [{ label: 'основа', code }].concat(lens)
+    try {
+      const res = build(list)
+      if (sameReel(res, refRes, flags)) return { list, res, touched }
+    } catch (e) { /* не склеилось, ниже как раньше */ }
+  }
+  const list = prune(ref, refRes)
+  return { list, res: list.length === ref.length ? refRes : build(list), touched }
 }
 
 // ---------- Стили сцены действуют только внутри сцены ----------
@@ -838,10 +1182,9 @@ reel({
 ${changed.map(s => `    ${JSON.stringify(s.name)}: ${s.len},`).join('\n')}
   },
 })`
-  const i = chunks.findIndex(c => c.label === LENGTHS)
-  if (!changed.length && grid === 0.5) { if (i >= 0) chunks.splice(i, 1) }
-  else if (i >= 0) chunks[i].code = code
-  else chunks.push({ label: LENGTHS, code })
+  // Эта часть всегда последняя
+  chunks = chunks.filter(c => c.label !== LENGTHS)
+  if (changed.length || grid !== 0.5) chunks.push({ label: LENGTHS, code })
   noteChange('lengths')
 }
 
@@ -868,6 +1211,7 @@ function fit() {
   frame.style.width = W * k + 'px'
   frame.style.height = H * k + 'px'
   stage.style.transform = `scale(${k})`
+  placeSay()
   paintEdit()
 }
 new ResizeObserver(fit).observe(view)
@@ -987,9 +1331,12 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keyup', e => { if (e.code === 'Space' && !typing(e.target)) e.preventDefault() })
 
 let statusTimer = 0
+// Всплывающая строка внизу кадра, над временем и шагом, чтобы их не закрывать
+function placeSay() { document.body.style.setProperty('--say-bottom', Math.max(8, innerHeight - view.getBoundingClientRect().bottom + 12) + 'px') }
 function say(text) {
   const el = $('.p-status')
   el.textContent = text
+  placeSay()
   el.classList.add('p-on')
   clearTimeout(statusTimer)
   statusTimer = setTimeout(() => el.classList.remove('p-on'), 3500)
@@ -1073,15 +1420,13 @@ function apply(raw, mode) {
   }
   const add = splitChunks(code)
   if (mode === 'put') add.forEach((c, i) => { if (c.label === 'основа') c.label = stamp() + (add.length > 1 ? ` (${i + 1})` : '') })
-  const next = mode === 'replace' ? add : [...chunks, ...add]
-  let res
-  try { res = build(next) } catch (e) { msg.textContent = e.message; return false }
-  if (mode === 'replace' && next.length === 1) next[0].label = 'основа'
+  // Сцены и общие объявления встают на место старых, длительности из плеера остаются последней частью
+  let m
+  try { m = mergeParts(mode === 'replace' ? [] : chunks, add) } catch (e) { msg.textContent = e.message; return false }
   const before = new Map(scenes.map(s => [s.name, s.dur]))
-  const touched = res.per.slice(next.length - add.length).flatMap(p => p.names)
-  chunks = prune(next, res)
-  if (chunks.length !== next.length) res = build(chunks)
-  mount(res)
+  const touched = m.touched
+  chunks = m.list
+  mount(m.res)
   const reset = scenes.filter(s => touched.includes(s.name) && before.has(s.name) && Math.abs(before.get(s.name) - s.dur) > 1e-6 && s.len !== s.dur)
   if (reset.length) { reset.forEach(s => { s.len = s.dur }); retime(); saveLengths() }
   noteChange(mode === 'replace' ? 'replace' : 'paste', add)
@@ -1122,6 +1467,7 @@ area.addEventListener('keydown', e => {
 // чужие (например, правки ИИ-агента) подхватывает сам
 const canLink = !!window.showOpenFilePicker
 let dirty = false, link = null, stored = null
+let noFile = false   // ролик открыт с сайта, живёт в хранилище браузера и ещё ни разу не записан в файл
 let pending = { lengths: false, paste: [], replace: false }
 let syncing = false, again = false, syncTimer = 0
 const BLOCK = /(<script type="text\/plain" id="reel-scenes">)([\s\S]*?)(<\/script>)/
@@ -1134,7 +1480,7 @@ const pageName = decodeURIComponent(location.pathname.split('/').pop() || '')
 
 function setDirty(v) {
   dirty = v
-  const show = v && !link
+  const show = (v || noFile) && !link
   $('[data-act="save"]').classList.toggle('p-strong', show)
   $('.p-unsaved').hidden = !show
 }
@@ -1145,6 +1491,20 @@ function noteChange(kind, list) {
   else pending.lengths = true
   clearTimeout(syncTimer)
   syncTimer = setTimeout(syncNow, 250)
+}
+// Какие ролики уже записаны в файл из этого браузера. По ним плеер с сайта понимает, есть ли у ролика файл
+const SAVED = 'reel-saved'
+function codeKey(code) {
+  const s = String(code).replace(/\s+/g, ' ').trim()
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) }
+  return (h >>> 0).toString(36) + '.' + s.length
+}
+const savedList = () => { try { return JSON.parse(localStorage.getItem(SAVED) || '[]') } catch (e) { return [] } }
+function markSaved() {
+  noFile = false
+  const k = codeKey(codeText())
+  try { localStorage.setItem(SAVED, JSON.stringify(savedList().filter(x => x !== k).concat(k).slice(-40))) } catch (e) { /* без памяти тоже работает */ }
 }
 function updateLinkUI() {
   const b = $('[data-act="link"]')
@@ -1191,6 +1551,7 @@ async function linkFile(handle) {
       pending.replace = true
       await syncNow()
     } else if (block.trim() !== codeText().trim()) adopt(block)
+    markSaved()
     dirty = false
     updateLinkUI()
     say(`Связано с${NB}${handle.name}. Изменения сохраняются сами`)
@@ -1211,12 +1572,14 @@ async function syncNow() {
     if (text !== link.text && !pending.replace) {
       const block = blockOf(text)
       if (block != null) {
-        list = splitChunks(block).concat(pending.paste)
+        list = splitChunks(block)
         if (pending.lengths) {
           const mine = chunks.find(c => c.label === LENGTHS)
           list = list.filter(c => c.label !== LENGTHS).concat(mine ? [mine] : [])
         }
-        try { list = prune(list, build(list)) } catch (e) { /* ошибку в коде покажет adopt */ }
+        if (pending.paste.length) {
+          try { list = mergeParts(list, pending.paste).list } catch (e) { list = list.concat(pending.paste) /* ошибку в коде покажет adopt */ }
+        }
       }
     }
     const out = withCode(text, list)
@@ -1229,6 +1592,7 @@ async function syncNow() {
     link.mod = (await link.handle.getFile()).lastModified
     pending = { lengths: false, paste: [], replace: false }
     if (list !== chunks) adopt(blockOf(out))
+    markSaved()
   } catch (e) { lost() }
   syncing = false
   if (again) { again = false; syncNow() }
@@ -1245,7 +1609,10 @@ async function watch() {
     if (text === link.text || syncing) return
     link.text = text
     const block = blockOf(text)
-    if (block != null && block.trim() !== codeText().trim() && adopt(block)) say(`Обновлено из${NB}${link.name}${settledNow ? ', ' + settledNote().toLowerCase() : ''}`)
+    if (block != null && block.trim() !== codeText().trim() && adopt(block)) {
+      markSaved()
+      say(`Обновлено из${NB}${link.name}${settledNow ? ', ' + settledNote().toLowerCase() : ''}`)
+    }
   } catch (e) { lost() }
 }
 setInterval(watch, 1000)
@@ -1289,6 +1656,7 @@ async function save() {
       await w.close()
       // Дальше плеер связан с этим файлом и сохраняет в него сам
       link = { handle, name: handle.name, text: html, mod: (await handle.getFile()).lastModified }
+      markSaved()
       dirty = false
       updateLinkUI()
       say(`Сохранено в${NB}${handle.name}. Дальше изменения сохраняются сами`)
@@ -1304,6 +1672,7 @@ async function save() {
   a.click()
   a.remove()
   setTimeout(() => URL.revokeObjectURL(a.href), 4000)
+  markSaved()
   setDirty(false)
   say(`Файл ${name} в${NB}папке загрузок`)
 }
@@ -1312,9 +1681,11 @@ window.addEventListener('beforeunload', e => {
 })
 
 // ---------- Запрос для ИИ ----------
-// Сцена и момент под курсором плюс что поправить. Для обычного чата к запросу добавляется код сцены
+// Сцена и момент под курсором плюс что поправить. Для обычного чата к запросу добавляется код ролика целиком
 const ask = $('.p-ask'), askWhat = $('.p-what', ask), askCode = $('.p-withcode', ask), askPre = $('pre', ask), askMsg = $('.p-msg', ask)
 let askCodeChoice = null
+// Чату: сцены пресета пользуются общими кусками из начала ролика, без них сцена не встанет
+const SHARED_ASK = 'Если сцена пользуется общими кусками из начала ролика (функциями и константами), пришли их вместе со сценой в том же блоке кода.'
 function askText() {
   const s = scenes[indexAt(T)]
   if (!s) return ''
@@ -1327,20 +1698,16 @@ function askText() {
     // Правки из кадра и просьба словами одним запросом
     lines = [`Поправь ролик${link ? ` в файле ${link.name}` : ''} по инструкции «Ролик из HTML»: внеси правки из плеера${what ? ' и просьбу словами' : ''}.`]
     if (what) lines.push(`Просьба словами. Сцена «${s.name}», момент ${moment}: ${what}`)
-    lines.push('', edits, '', link ? 'Поправь сцены прямо в файле, остальное не меняй.' : 'Пришли изменённые сцены целиком, с теми же name. Остальные сцены не меняй.')
+    lines.push('', edits, '', link ? 'Поправь сцены прямо в файле, остальное не меняй.' : `Пришли изменённые сцены целиком, с теми же name. Остальные сцены не меняй. ${SHARED_ASK}`)
   } else {
     lines = [
       `Поправь сцену «${s.name}»${link ? ` в файле ${link.name}` : ''} по инструкции «Ролик из HTML».`,
       `Момент: ${moment}.`,
       `Что поправить: ${what || '...'}`,
-      link ? 'Поправь сцену прямо в файле, остальные сцены не меняй.' : 'Пришли только эту сцену целиком, с тем же name. Остальные сцены не меняй.',
+      link ? 'Поправь сцену прямо в файле, остальные сцены не меняй.' : `Пришли только эту сцену целиком, с тем же name. Остальные сцены не меняй. ${SHARED_ASK}`,
     ]
   }
-  if (askCode.checked) {
-    const touched = [s].concat(liveRecs().map(r => scenes.find(x => x.name === r.scene)).filter(Boolean))
-    const code = [...new Set(touched.map(x => x.src && x.src.code).filter(Boolean))]
-    lines.push('', code.length > 1 || edits ? 'Текущий код этих сцен:' : 'Текущий код, в нём эта сцена:', '```js', code.join('\n\n'), '```')
-  }
+  if (askCode.checked) lines.push('', 'Текущий код ролика:', '```js', codeText(), '```')
   return lines.join('\n')
 }
 function openAsk() {
@@ -2332,6 +2699,11 @@ const hashT = (location.hash.match(/t=([\d.]+)/) || [])[1]
 if (hashT) seek(+hashT)
 updateLinkUI()
 restoreLink()
+// Ролик открыт с сайта (страница «Видео» дописывает после плеера reel-player.js) и ещё не записан в файл:
+// сразу горит «Не сохранено». Ролик, сохранённый из этого браузера и открытый снова, файл уже имеет
+document.addEventListener('DOMContentLoaded', () => {
+  if (!link && document.querySelector('script[src*="reel-player.js"]') && !savedList().includes(codeKey(codeText()))) { noFile = true; setDirty(dirty) }
+})
 if (document.fonts) {
   document.fonts.ready.then(render)
   document.fonts.addEventListener('loadingdone', render)
